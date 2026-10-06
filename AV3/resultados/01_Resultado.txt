@@ -1,0 +1,335 @@
+SQL> BEGIN
+         FOR t IN (SELECT table_name FROM user_tables
+                    WHERE table_name IN ('DESEMPENHA','ATUACAO','VINCULO','INGRESSO','FORMA_PAGAMENTO',
+                                         'PEDIDO','OFERTA','FUNCAO','LOTE','SETOR','CATEGORIA_EVENTO',...
+Show more...
+
+
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.063
+
+
+SQL> CREATE SEQUENCE seq_criador START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_CRIADOR created.
+
+Elapsed: 00:00:00.009
+
+
+SQL> CREATE SEQUENCE seq_evento  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_EVENTO created.
+
+Elapsed: 00:00:00.005
+
+
+SQL> CREATE SEQUENCE seq_pedido  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_PEDIDO created.
+
+Elapsed: 00:00:00.004
+
+
+SQL> CREATE SEQUENCE seq_funcao  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_FUNCAO created.
+
+Elapsed: 00:00:00.005
+
+
+SQL> CREATE SEQUENCE seq_setor   START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_SETOR created.
+
+Elapsed: 00:00:00.004
+
+
+SQL> CREATE SEQUENCE seq_lote    START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_LOTE created.
+
+Elapsed: 00:00:00.004
+
+
+SQL> CREATE TABLE Usuario (
+         cpf            VARCHAR2(11)   NOT NULL,
+         primeiro_nome  VARCHAR2(50)   NOT NULL,
+         sobrenome      VARCHAR2(100)  NOT NULL,...
+Show more...
+
+
+
+Table USUARIO created.
+
+Elapsed: 00:00:00.028
+
+
+SQL> CREATE TABLE Telefone (
+         cpf       VARCHAR2(11) NOT NULL,
+         telefone  VARCHAR2(11) NOT NULL,
+         CONSTRAINT pk_telefone PRIMARY KEY (cpf, telefone),...
+Show more...
+
+
+
+Table TELEFONE created.
+
+Elapsed: 00:00:00.017
+
+
+SQL> CREATE TABLE Criador (
+         id_criador    INTEGER      NOT NULL,
+         agencia       VARCHAR2(4)  NOT NULL,
+         num_conta     VARCHAR2(12) NOT NULL,...
+Show more...
+
+
+
+Table CRIADOR created.
+
+Elapsed: 00:00:00.022
+
+
+SQL> CREATE TABLE Produtor (
+         id_criador  INTEGER      NOT NULL,
+         cpf         VARCHAR2(11) NOT NULL,
+         CONSTRAINT pk_produtor PRIMARY KEY (id_criador),...
+Show more...
+
+
+
+Table PRODUTOR created.
+
+Elapsed: 00:00:00.021
+
+
+SQL> CREATE TABLE Endereco (
+         cep         VARCHAR2(8)   NOT NULL,
+         logradouro  VARCHAR2(120) NOT NULL,
+         bairro      VARCHAR2(60)  NOT NULL,...
+Show more...
+
+
+
+Table ENDERECO created.
+
+Elapsed: 00:00:00.019
+
+
+SQL> CREATE TABLE Empresa (
+         id_criador   INTEGER       NOT NULL,
+         cnpj         VARCHAR2(14)  NOT NULL,
+         nome         VARCHAR2(120) NOT NULL,...
+Show more...
+
+
+
+Table EMPRESA created.
+
+Elapsed: 00:00:00.029
+
+
+SQL> CREATE TABLE Evento (
+         id_evento      INTEGER       NOT NULL,
+         nome           VARCHAR2(120) NOT NULL,
+         descricao      VARCHAR2(400),...
+Show more...
+
+
+
+Table EVENTO created.
+
+Elapsed: 00:00:00.022
+
+
+SQL> CREATE TABLE Categoria_Evento (
+         id_evento  INTEGER      NOT NULL,
+         categoria  VARCHAR2(30) NOT NULL,
+         CONSTRAINT pk_categoria_evento PRIMARY KEY (id_evento, categoria),...
+Show more...
+
+
+
+Table CATEGORIA_EVENTO created.
+
+Elapsed: 00:00:00.019
+
+
+SQL> CREATE TABLE Setor (
+         id_setor   INTEGER       NOT NULL,
+         nome       VARCHAR2(60)  NOT NULL,
+         descricao  VARCHAR2(200),...
+Show more...
+
+
+
+Table SETOR created.
+
+Elapsed: 00:00:00.016
+
+
+SQL> CREATE TABLE Lote (
+         id_lote    INTEGER       NOT NULL,
+         nome       VARCHAR2(60)  NOT NULL,
+         ordem      INTEGER       NOT NULL,...
+Show more...
+
+
+
+Table LOTE created.
+
+Elapsed: 00:00:00.018
+
+
+SQL> CREATE TABLE Funcao (
+         id_funcao  INTEGER       NOT NULL,
+         nome       VARCHAR2(60)  NOT NULL,
+         descricao  VARCHAR2(200),...
+Show more...
+
+
+
+Table FUNCAO created.
+
+Elapsed: 00:00:00.015
+
+
+SQL> CREATE TABLE Oferta (
+         id_evento          INTEGER       NOT NULL,
+         id_setor           INTEGER       NOT NULL,
+         id_lote            INTEGER       NOT NULL,...
+Show more...
+
+
+
+Table OFERTA created.
+
+Elapsed: 00:00:00.024
+
+
+SQL> CREATE TABLE Pedido (
+         id_pedido      INTEGER NOT NULL,
+         dt_realizacao  DATE    NOT NULL,
+         cpf_usuario    VARCHAR2(11) NOT NULL,...
+Show more...
+
+
+
+Table PEDIDO created.
+
+Elapsed: 00:00:00.017
+
+
+SQL> CREATE TABLE Forma_Pagamento (
+         id_pedido        INTEGER      NOT NULL,
+         forma_pagamento  VARCHAR2(20) NOT NULL,
+         CONSTRAINT pk_forma_pagamento PRIMARY KEY (id_pedido, forma_pagamento),...
+Show more...
+
+
+
+Table FORMA_PAGAMENTO created.
+
+Elapsed: 00:00:00.021
+
+
+SQL> CREATE TABLE Ingresso (
+         id_evento     INTEGER      NOT NULL,
+         num_ingresso  INTEGER      NOT NULL,
+         preco_pago    NUMBER(10,2),...
+Show more...
+
+
+
+Table INGRESSO created.
+
+Elapsed: 00:00:00.026
+
+
+SQL> CREATE TABLE Vinculo (
+         id_produtor  INTEGER NOT NULL,
+         id_empresa   INTEGER NOT NULL,
+         dt_inicio    DATE    NOT NULL,...
+Show more...
+
+
+
+Table VINCULO created.
+
+Elapsed: 00:00:00.024
+
+
+SQL> CREATE TABLE Atuacao (
+         id_produtor  INTEGER NOT NULL,
+         id_evento    INTEGER NOT NULL,
+         dt_inicio    DATE    NOT NULL,...
+Show more...
+
+
+
+Table ATUACAO created.
+
+Elapsed: 00:00:00.019
+
+
+SQL> CREATE TABLE Desempenha (
+         id_produtor  INTEGER NOT NULL,
+         id_evento    INTEGER NOT NULL,
+         dt_inicio    DATE    NOT NULL,...
+Show more...
+
+
+
+Table DESEMPENHA created.
+
+Elapsed: 00:00:00.017
+
+
+SQL> CREATE INDEX idx_evento_criador  ON Evento (id_criador)
+
+
+
+Index IDX_EVENTO_CRIADOR created.
+
+Elapsed: 00:00:00.009
+
+
+SQL> CREATE INDEX idx_evento_cep      ON Evento (cep)
+
+
+
+Index IDX_EVENTO_CEP created.
+
+Elapsed: 00:00:00.008
+
+
+SQL> CREATE INDEX idx_pedido_usuario  ON Pedido (cpf_usuario)
+
+
+
+Index IDX_PEDIDO_USUARIO created.
+
+Elapsed: 00:00:00.007
+
+
+SQL> CREATE INDEX idx_ingresso_pedido ON Ingresso (id_pedido)
+
+
+
+Index IDX_INGRESSO_PEDIDO created.
+
+Elapsed: 00:00:00.008

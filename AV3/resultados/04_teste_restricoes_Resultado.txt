@@ -1,0 +1,23 @@
+SQL> DECLARE
+         PROCEDURE teste (p_descricao IN VARCHAR2, p_comando IN VARCHAR2) IS
+         BEGIN
+             EXECUTE IMMEDIATE p_comando;...
+Show more...
+
+
+OK    | 01 CPF com 10 digitos (CHECK ck_usuario_cpf) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_USUARIO_CPF) violated
+OK    | 02 e-mail duplicado (UNIQUE uk_usuario_email) | ORA-00001: unique constraint (SILVABRENO462_SCHEMA_XGBIY.UK_USUARIO_EMAIL) violated on table SILVABRENO462_SCH
+OK    | 03 usuario indicando a si mesmo (CHECK ck_usuario_autoindicacao) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_USUARIO_AUTOINDICACAO) violated
+OK    | 04 tipo_criador fora do dominio (CHECK ck_criador_tipo) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_CRIADOR_TIPO) violated
+OK    | 05 UF inexistente (CHECK ck_endereco_uf) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_ENDERECO_UF) violated
+OK    | 06 setor com nome repetido (UNIQUE uk_setor_nome) | ORA-00001: unique constraint (SILVABRENO462_SCHEMA_XGBIY.UK_SETOR_NOME) violated on table SILVABRENO462_SCHEMA
+OK    | 07 oferta com preco zero (CHECK ck_oferta_preco) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_OFERTA_PRECO) violated
+OK    | 08 preco_pago em ingresso sem pedido (CHECK ck_ingresso_venda) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_INGRESSO_VENDA) violated
+OK    | 09 ingresso em oferta inexistente, setor Camarote no Reveillon (FK fk_ingresso_oferta) | ORA-02291: integrity constraint (SILVABRENO462_SCHEMA_XGBIY.FK_INGRESSO_OFERTA) violated - parent key not foun
+OK    | 10 vinculo terminando antes de comecar (CHECK ck_vinculo_periodo) | ORA-02290: check constraint (SILVABRENO462_SCHEMA_XGBIY.CK_VINCULO_PERIODO) violated
+OK    | 11 excluir evento que tem ofertas, ingressos e atuacoes (FK das tabelas filhas) | ORA-02292: integrity constraint (SILVABRENO462_SCHEMA_XGBIY.FK_ATUACAO_EVENTO) violated - child record found
+
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.014

@@ -1,0 +1,2352 @@
+SQL> BEGIN
+         FOR t IN (SELECT table_name FROM user_tables
+                    WHERE table_name IN ('DESEMPENHA','ATUACAO','VINCULO','INGRESSO','FORMA_PAGAMENTO',
+                                         'PEDIDO','OFERTA','FUNCAO','LOTE','SETOR','CATEGORIA_EVENTO',...
+Show more...
+
+
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.063
+
+
+SQL> CREATE SEQUENCE seq_criador START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_CRIADOR created.
+
+Elapsed: 00:00:00.009
+
+
+SQL> CREATE SEQUENCE seq_evento  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_EVENTO created.
+
+Elapsed: 00:00:00.005
+
+
+SQL> CREATE SEQUENCE seq_pedido  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_PEDIDO created.
+
+Elapsed: 00:00:00.004
+
+
+SQL> CREATE SEQUENCE seq_funcao  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_FUNCAO created.
+
+Elapsed: 00:00:00.005
+
+
+SQL> CREATE SEQUENCE seq_setor   START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_SETOR created.
+
+Elapsed: 00:00:00.004
+
+
+SQL> CREATE SEQUENCE seq_lote    START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE
+
+
+
+Sequence SEQ_LOTE created.
+
+Elapsed: 00:00:00.004
+
+
+SQL> CREATE TABLE Usuario (
+         cpf            VARCHAR2(11)   NOT NULL,
+         primeiro_nome  VARCHAR2(50)   NOT NULL,
+         sobrenome      VARCHAR2(100)  NOT NULL,...
+Show more...
+
+
+
+Table USUARIO created.
+
+Elapsed: 00:00:00.028
+
+
+SQL> CREATE TABLE Telefone (
+         cpf       VARCHAR2(11) NOT NULL,
+         telefone  VARCHAR2(11) NOT NULL,
+         CONSTRAINT pk_telefone PRIMARY KEY (cpf, telefone),...
+Show more...
+
+
+
+Table TELEFONE created.
+
+Elapsed: 00:00:00.017
+
+
+SQL> CREATE TABLE Criador (
+         id_criador    INTEGER      NOT NULL,
+         agencia       VARCHAR2(4)  NOT NULL,
+         num_conta     VARCHAR2(12) NOT NULL,...
+Show more...
+
+
+
+Table CRIADOR created.
+
+Elapsed: 00:00:00.022
+
+
+SQL> CREATE TABLE Produtor (
+         id_criador  INTEGER      NOT NULL,
+         cpf         VARCHAR2(11) NOT NULL,
+         CONSTRAINT pk_produtor PRIMARY KEY (id_criador),...
+Show more...
+
+
+
+Table PRODUTOR created.
+
+Elapsed: 00:00:00.021
+
+
+SQL> CREATE TABLE Endereco (
+         cep         VARCHAR2(8)   NOT NULL,
+         logradouro  VARCHAR2(120) NOT NULL,
+         bairro      VARCHAR2(60)  NOT NULL,...
+Show more...
+
+
+
+Table ENDERECO created.
+
+Elapsed: 00:00:00.019
+
+
+SQL> CREATE TABLE Empresa (
+         id_criador   INTEGER       NOT NULL,
+         cnpj         VARCHAR2(14)  NOT NULL,
+         nome         VARCHAR2(120) NOT NULL,...
+Show more...
+
+
+
+Table EMPRESA created.
+
+Elapsed: 00:00:00.029
+
+
+SQL> CREATE TABLE Evento (
+         id_evento      INTEGER       NOT NULL,
+         nome           VARCHAR2(120) NOT NULL,
+         descricao      VARCHAR2(400),...
+Show more...
+
+
+
+Table EVENTO created.
+
+Elapsed: 00:00:00.022
+
+
+SQL> CREATE TABLE Categoria_Evento (
+         id_evento  INTEGER      NOT NULL,
+         categoria  VARCHAR2(30) NOT NULL,
+         CONSTRAINT pk_categoria_evento PRIMARY KEY (id_evento, categoria),...
+Show more...
+
+
+
+Table CATEGORIA_EVENTO created.
+
+Elapsed: 00:00:00.019
+
+
+SQL> CREATE TABLE Setor (
+         id_setor   INTEGER       NOT NULL,
+         nome       VARCHAR2(60)  NOT NULL,
+         descricao  VARCHAR2(200),...
+Show more...
+
+
+
+Table SETOR created.
+
+Elapsed: 00:00:00.016
+
+
+SQL> CREATE TABLE Lote (
+         id_lote    INTEGER       NOT NULL,
+         nome       VARCHAR2(60)  NOT NULL,
+         ordem      INTEGER       NOT NULL,...
+Show more...
+
+
+
+Table LOTE created.
+
+Elapsed: 00:00:00.018
+
+
+SQL> CREATE TABLE Funcao (
+         id_funcao  INTEGER       NOT NULL,
+         nome       VARCHAR2(60)  NOT NULL,
+         descricao  VARCHAR2(200),...
+Show more...
+
+
+
+Table FUNCAO created.
+
+Elapsed: 00:00:00.015
+
+
+SQL> CREATE TABLE Oferta (
+         id_evento          INTEGER       NOT NULL,
+         id_setor           INTEGER       NOT NULL,
+         id_lote            INTEGER       NOT NULL,...
+Show more...
+
+
+
+Table OFERTA created.
+
+Elapsed: 00:00:00.024
+
+
+SQL> CREATE TABLE Pedido (
+         id_pedido      INTEGER NOT NULL,
+         dt_realizacao  DATE    NOT NULL,
+         cpf_usuario    VARCHAR2(11) NOT NULL,...
+Show more...
+
+
+
+Table PEDIDO created.
+
+Elapsed: 00:00:00.017
+
+
+SQL> CREATE TABLE Forma_Pagamento (
+         id_pedido        INTEGER      NOT NULL,
+         forma_pagamento  VARCHAR2(20) NOT NULL,
+         CONSTRAINT pk_forma_pagamento PRIMARY KEY (id_pedido, forma_pagamento),...
+Show more...
+
+
+
+Table FORMA_PAGAMENTO created.
+
+Elapsed: 00:00:00.021
+
+
+SQL> CREATE TABLE Ingresso (
+         id_evento     INTEGER      NOT NULL,
+         num_ingresso  INTEGER      NOT NULL,
+         preco_pago    NUMBER(10,2),...
+Show more...
+
+
+
+Table INGRESSO created.
+
+Elapsed: 00:00:00.026
+
+
+SQL> CREATE TABLE Vinculo (
+         id_produtor  INTEGER NOT NULL,
+         id_empresa   INTEGER NOT NULL,
+         dt_inicio    DATE    NOT NULL,...
+Show more...
+
+
+
+Table VINCULO created.
+
+Elapsed: 00:00:00.024
+
+
+SQL> CREATE TABLE Atuacao (
+         id_produtor  INTEGER NOT NULL,
+         id_evento    INTEGER NOT NULL,
+         dt_inicio    DATE    NOT NULL,...
+Show more...
+
+
+
+Table ATUACAO created.
+
+Elapsed: 00:00:00.019
+
+
+SQL> CREATE TABLE Desempenha (
+         id_produtor  INTEGER NOT NULL,
+         id_evento    INTEGER NOT NULL,
+         dt_inicio    DATE    NOT NULL,...
+Show more...
+
+
+
+Table DESEMPENHA created.
+
+Elapsed: 00:00:00.017
+
+
+SQL> CREATE INDEX idx_evento_criador  ON Evento (id_criador)
+
+
+
+Index IDX_EVENTO_CRIADOR created.
+
+Elapsed: 00:00:00.009
+
+
+SQL> CREATE INDEX idx_evento_cep      ON Evento (cep)
+
+
+
+Index IDX_EVENTO_CEP created.
+
+Elapsed: 00:00:00.008
+
+
+SQL> CREATE INDEX idx_pedido_usuario  ON Pedido (cpf_usuario)
+
+
+
+Index IDX_PEDIDO_USUARIO created.
+
+Elapsed: 00:00:00.007
+
+
+SQL> CREATE INDEX idx_ingresso_pedido ON Ingresso (id_pedido)
+
+
+
+Index IDX_INGRESSO_PEDIDO created.
+
+Elapsed: 00:00:00.008
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('04812367091', 'Ana Beatriz', 'Albuquerque', 'ana.albuquerque@gmail.com', DATE '1991-03-12', DATE '2024-01-15', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.026
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('37250914861', 'Carlos Eduardo', 'Pereira', 'carlos.pereira@outlook.com', DATE '1985-07-22', DATE '2024-01-20', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('82619475030', 'Mariana', 'Cavalcanti', 'mariana.cavalcanti@hotmail.com', DATE '1993-11-05', DATE '2024-02-03', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('15934782605', 'Rafael', 'Tavares', 'rafael.tavares@yahoo.com.br', DATE '1988-05-30', DATE '2024-02-10', '04812367091', DATE '2024-02-10')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('60473829150', 'Juliana', 'Monteiro', 'juliana.monteiro@email.com.br', DATE '1995-09-18', DATE '2024-02-18', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('29581367408', 'Thiago', 'Barros', 'thiago.barros@gmail.com', DATE '1990-01-27', DATE '2024-03-02', '82619475030', DATE '2024-03-02')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('73096158240', 'Fernanda', 'Siqueira', 'fernanda.siqueira@outlook.com', DATE '1987-12-09', DATE '2024-03-11', '37250914861', DATE '2024-03-11')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('41857293610', 'Lucas', 'Nogueira', 'lucas.nogueira@hotmail.com', DATE '1998-04-14', DATE '2024-04-05', '82619475030', DATE '2024-04-05')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('96320481750', 'Camila', 'Rocha', 'camila.rocha@yahoo.com.br', DATE '1996-02-08', DATE '2024-04-20', '60473829150', DATE '2024-04-20')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('58714029366', 'Bruno', 'Carvalho', 'bruno.carvalho@email.com.br', DATE '1992-08-25', DATE '2024-05-12', '73096158240', DATE '2024-05-12')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('20468351970', 'Patrícia', 'Lopes', 'patricia.lopes@gmail.com', DATE '1989-06-14', DATE '2024-06-01', '04812367091', DATE '2024-06-01')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('83159702463', 'Diego', 'Fernandes', 'diego.fernandes@outlook.com', DATE '2000-10-03', DATE '2024-06-18', '15934782605', DATE '2024-06-18')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('34720896512', 'Larissa', 'Gomes', 'larissa.gomes@hotmail.com', DATE '1999-12-21', DATE '2024-07-07', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('67105438920', 'Gustavo', 'Ribeiro', 'gustavo.ribeiro@yahoo.com.br', DATE '1983-04-02', DATE '2024-08-15', '20468351970', DATE '2024-08-15')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('12983647053', 'Beatriz', 'Moura', 'beatriz.moura@email.com.br', DATE '2001-01-30', DATE '2024-09-09', '83159702463', DATE '2024-09-09')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('75430918246', 'Henrique', 'Duarte', 'henrique.duarte@gmail.com', DATE '1994-03-17', DATE '2024-10-22', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('48267019385', 'Isabela', 'Freitas', 'isabela.freitas@outlook.com', DATE '1997-07-11', DATE '2024-11-05', '34720896512', DATE '2024-11-05')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('90614783521', 'Felipe', 'Araújo', 'felipe.araujo@hotmail.com', DATE '1986-09-29', DATE '2025-01-13', '67105438920', DATE '2025-01-13')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('26839540170', 'Natália', 'Pinheiro', 'natalia.pinheiro@yahoo.com.br', DATE '2002-05-06', DATE '2025-02-02', '12983647053', DATE '2025-02-02')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('51792368049', 'Vinícius', 'Maciel', 'vinicius.maciel@email.com.br', DATE '1991-11-19', DATE '2025-03-18', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('38405917628', 'Aline', 'Cordeiro', 'aline.cordeiro@gmail.com', DATE '1993-08-08', DATE '2025-05-27', '20468351970', DATE '2025-05-27')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('64912037851', 'Rodrigo', 'Santana', 'rodrigo.santana@outlook.com', DATE '1984-02-14', DATE '2025-07-04', '90614783521', DATE '2025-07-04')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('17356984206', 'Letícia', 'Brandão', 'leticia.brandao@hotmail.com', DATE '2003-06-23', DATE '2025-09-12', '48267019385', DATE '2025-09-12')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('85073261940', 'Marcelo', 'Teixeira', 'marcelo.teixeira@yahoo.com.br', DATE '1979-10-16', DATE '2025-10-30', NULL, NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('42690817355', 'Sofia', 'Medeiros', 'sofia.medeiros@email.com.br', DATE '2004-03-09', DATE '2025-12-08', '26839540170', DATE '2025-12-08')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('70518342967', 'Paulo Henrique', 'Vasconcelos', 'paulo.vasconcelos@gmail.com', DATE '1982-01-05', DATE '2026-01-21', '64912037851', DATE '2026-01-21')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('23947106588', 'Renata', 'Queiroz', 'renata.queiroz@outlook.com', DATE '1990-12-02', DATE '2026-02-26', '38405917628', DATE '2026-02-26')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('59081724630', 'Eduardo', 'Guedes', 'eduardo.guedes@hotmail.com', DATE '1996-09-04', DATE '2026-04-14', '51792368049', DATE '2026-04-14')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('81236459072', 'Tatiana', 'Lacerda', 'tatiana.lacerda@yahoo.com.br', DATE '1988-07-27', DATE '2026-06-09', '42690817355', DATE '2026-06-09')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, dt_cadastro, cpf_indicador, dt_indicacao)
+     VALUES ('36705298414', 'Matheus', 'Oliveira', 'matheus.oliveira@email.com.br', DATE '2005-11-13', DATE '2026-08-03', '59081724630', DATE '2026-08-03')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('04812367091', '81987654321')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.015
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('04812367091', '81991122334')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('37250914861', '81988112233')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('37250914861', '8133219876')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('82619475030', '81999887766')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('82619475030', '81992334455')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('15934782605', '81997766551')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.001
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('60473829150', '81998877665')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('29581367408', '81996655443')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('73096158240', '81995544332')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('41857293610', '81994433221')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('96320481750', '81993322110')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('58714029366', '81992211009')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('20468351970', '81981234567')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('20468351970', '8132214455')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('83159702463', '81982345678')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('34720896512', '81983456789')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.001
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('67105438920', '81984567890')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('67105438920', '81985678901')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('12983647053', '81986789012')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('75430918246', '11987654321')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('75430918246', '11998761234')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('48267019385', '11976543210')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('90614783521', '81987001122')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('26839540170', '71988776655')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('51792368049', '21987654321')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('51792368049', '21991234567')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.001
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('38405917628', '85988776655')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.001
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('64912037851', '31987654321')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('17356984206', '81981002003')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('85073261940', '11965432109')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('85073261940', '1133224455')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('42690817355', '81980011223')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('70518342967', '81991010202')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('70518342967', '81991010303')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('23947106588', '71991234000')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('23947106588', '7133445566')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('59081724630', '81992020404')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('81236459072', '85999887766')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('36705298414', '81993030505')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Setor (id_setor, nome, descricao) VALUES (seq_setor.NEXTVAL, 'Pista', 'Area em pe em frente ao palco')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.021
+
+
+SQL> INSERT INTO Setor (id_setor, nome, descricao) VALUES (seq_setor.NEXTVAL, 'Pista Premium', 'Area em pe com acesso privilegiado e bar exclusivo')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Setor (id_setor, nome, descricao) VALUES (seq_setor.NEXTVAL, 'Arquibancada', 'Assentos em degraus com visao panoramica')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Setor (id_setor, nome, descricao) VALUES (seq_setor.NEXTVAL, 'Camarote', 'Area elevada com mesas e servico de bar')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Setor (id_setor, nome, descricao) VALUES (seq_setor.NEXTVAL, 'VIP', 'Area reservada com open bar e entrada exclusiva')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Setor (id_setor, nome, descricao) VALUES (seq_setor.NEXTVAL, 'Plateia', 'Cadeiras numeradas voltadas ao palco')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Lote (id_lote, nome, ordem, descricao) VALUES (seq_lote.NEXTVAL, 'Lote Promocional', 0, 'Lote de lancamento com desconto maximo e quantidade reduzida')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.019
+
+
+SQL> INSERT INTO Lote (id_lote, nome, ordem, descricao) VALUES (seq_lote.NEXTVAL, 'Primeiro Lote', 1, 'Primeira janela regular de venda')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Lote (id_lote, nome, ordem, descricao) VALUES (seq_lote.NEXTVAL, 'Segundo Lote', 2, 'Segunda janela de venda, com reajuste')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Lote (id_lote, nome, ordem, descricao) VALUES (seq_lote.NEXTVAL, 'Terceiro Lote', 3, 'Terceira janela de venda, proxima ao evento')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Lote (id_lote, nome, ordem, descricao) VALUES (seq_lote.NEXTVAL, 'Lote Final', 4, 'Ultimas unidades, vendidas na semana do evento')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Produção Executiva', 'Responsavel geral pela execucao e orcamento do evento')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.019
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Curadoria', 'Selecao e programacao das atracoes ou do conteudo')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Marketing', 'Divulgacao, midia e relacionamento com o publico')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Logística', 'Montagem de estrutura, fornecedores, transporte e cronograma')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Direção Artística', 'Concepcao artistica e conducao do palco')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Captação de Patrocínio', 'Prospeccao e relacionamento com patrocinadores')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Coordenação de Palco', 'Operacao do palco, som, luz e passagem de som')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Funcao (id_funcao, nome, descricao) VALUES (seq_funcao.NEXTVAL, 'Credenciamento', 'Controle de acesso, credenciais e fluxo de entrada')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('50030230', 'Rua da Moeda', 'Recife Antigo', 'Recife', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.014
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('51021040', 'Avenida Boa Viagem', 'Boa Viagem', 'Recife', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('50010010', 'Praça do Marco Zero', 'Recife Antigo', 'Recife', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('52061000', 'Avenida Cruz Cabugá', 'Santo Amaro', 'Recife', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('53120040', 'Rua do Amparo', 'Carmo', 'Olinda', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('55014000', 'Rua Vigário Freitas', 'Maurício de Nassau', 'Caruaru', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('50740400', 'Avenida Professor Moraes Rego', 'Cidade Universitária', 'Recife', 'PE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('01310100', 'Avenida Paulista', 'Bela Vista', 'São Paulo', 'SP')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('04094050', 'Avenida Pedro Álvares Cabral', 'Vila Mariana', 'São Paulo', 'SP')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('01050070', 'Rua Álvaro de Carvalho', 'Centro', 'São Paulo', 'SP')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('40170010', 'Avenida Oceânica', 'Barra', 'Salvador', 'BA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Endereco (cep, logradouro, bairro, cidade, uf) VALUES ('60165121', 'Avenida Beira Mar', 'Meireles', 'Fortaleza', 'CE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '0341', '10234-5', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.020
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '0341', '11876-0', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '1105', '20455-3', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '0341', '12099-7', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '2204', '30871-9', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '1105', '20991-4', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '0341', '13342-1', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '2204', '31555-6', 'PRODUTOR')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '3001', '70210-8', 'EMPRESA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '3001', '70455-2', 'EMPRESA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '3002', '80123-4', 'EMPRESA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Criador (id_criador, agencia, num_conta, tipo_criador) VALUES (seq_criador.NEXTVAL, '3001', '70981-5', 'EMPRESA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '0341' AND num_conta = '10234-5'), '82619475030')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.036
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '0341' AND num_conta = '11876-0'), '15934782605')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '1105' AND num_conta = '20455-3'), '60473829150')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '0341' AND num_conta = '12099-7'), '29581367408')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '2204' AND num_conta = '30871-9'), '73096158240')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '1105' AND num_conta = '20991-4'), '41857293610')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '0341' AND num_conta = '13342-1'), '96320481750')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Produtor (id_criador, cpf)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '2204' AND num_conta = '31555-6'), '58714029366')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Empresa (id_criador, cnpj, nome, cep, numero, complemento)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '3001' AND num_conta = '70210-8'), '10234567000108', 'Pulso Produções LTDA', '50030230', '120', 'Sala 304')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.027
+
+
+SQL> INSERT INTO Empresa (id_criador, cnpj, nome, cep, numero, complemento)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '3001' AND num_conta = '70455-2'), '20345678000119', 'Maré Alta Entretenimento S.A.', '51021040', '2500', 'Andar 7')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Empresa (id_criador, cnpj, nome, cep, numero, complemento)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '3002' AND num_conta = '80123-4'), '30456789000120', 'Cena Aberta Cultural ME', '01310100', '1500', 'Conjunto 82')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Empresa (id_criador, cnpj, nome, cep, numero, complemento)
+     VALUES ((SELECT id_criador FROM Criador WHERE agencia = '3001' AND num_conta = '70981-5'), '40567890000131', 'Sertão Digital Eventos LTDA', '55014000', '45', NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Festival Maré Viva 2025', 'Festival de musica autoral pernambucana com tres palcos e feira de artesanato.', DATE '2025-11-22', '50010010', 'S/N', 'Palco Principal', (SELECT id_criador FROM Empresa WHERE cnpj = '20345678000119'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.032
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Noite do Forró Pé de Serra', 'Noite de forro tradicional com trios de pe de serra e quadrilha ao vivo.', DATE '2026-06-13', '55014000', '300', 'Patio de Eventos', (SELECT id_criador FROM Empresa WHERE cnpj = '40567890000131'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Recife Tech Summit 2026', 'Congresso de tecnologia com trilhas de dados, nuvem e inteligencia artificial.', DATE '2026-04-18', '50740400', '1235', 'Auditorio Central', (SELECT id_criador FROM Empresa WHERE cnpj = '10234567000108'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Stand-up Pernambuco: Risadas ao Vivo', 'Noite com cinco comediantes da cena local em formato de showcase.', DATE '2026-05-09', '52061000', '300', 'Teatro Alameda', (SELECT id_criador FROM Produtor WHERE cpf = '60473829150'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.006
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Sabores do Nordeste', 'Feira gastronomica com chefs regionais, degustacoes guiadas e musica ao vivo.', DATE '2026-08-22', '53120040', '88', 'Casarao Colonial', (SELECT id_criador FROM Empresa WHERE cnpj = '20345678000119'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.007
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Rock na Praça', 'Festival de rock com bandas nacionais em um dia de programacao.', DATE '2026-03-28', '04094050', 'S/N', 'Gramado Central', (SELECT id_criador FROM Empresa WHERE cnpj = '30456789000120'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Teatro: A Última Sessão', 'Drama em dois atos sobre o fechamento de um cinema de rua.', DATE '2026-09-12', '01050070', '455', 'Sala Principal', (SELECT id_criador FROM Produtor WHERE cpf = '73096158240'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Réveillon Orla de Boa Viagem 2027', 'Virada de ano com shows em palco na orla e queima de fogos.', DATE '2026-12-31', '51021040', 'S/N', 'Altura do Posto 6', (SELECT id_criador FROM Empresa WHERE cnpj = '20345678000119'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Festival de Jazz de Salvador', 'Tres noites de jazz e musica instrumental brasileira em arena a beira-mar.', DATE '2026-11-14', '40170010', 'S/N', 'Arena Barra', (SELECT id_criador FROM Produtor WHERE cpf = '29581367408'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Evento (id_evento, nome, descricao, dt_realizacao, cep, numero, complemento, id_criador)
+     VALUES (seq_evento.NEXTVAL, 'Copa Nordeste de Futevôlei', 'Torneio regional de futevolei com duplas de oito estados.', DATE '2027-01-23', '60165121', '3000', 'Arena de Areia', (SELECT id_criador FROM Produtor WHERE cpf = '82619475030'))
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'), 'MUSICA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.021
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'), 'FESTIVAL')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'), 'MUSICA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'), 'FESTIVAL')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'), 'CULTURA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'), 'TECNOLOGIA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'), 'CONGRESSO')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Stand-up Pernambuco: Risadas ao Vivo'), 'STAND-UP')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Sabores do Nordeste'), 'GASTRONOMIA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Sabores do Nordeste'), 'CULTURA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Rock na Praça'), 'MUSICA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Teatro: A Última Sessão'), 'TEATRO')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Teatro: A Última Sessão'), 'CULTURA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'), 'MUSICA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.002
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'), 'FESTIVAL')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Festival de Jazz de Salvador'), 'MUSICA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Festival de Jazz de Salvador'), 'FESTIVAL')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Festival de Jazz de Salvador'), 'CULTURA')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Categoria_Evento (id_evento, categoria) VALUES ((SELECT id_evento FROM Evento WHERE nome = 'Copa Nordeste de Futevôlei'), 'ESPORTE')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> DECLARE
+         PROCEDURE abrir_oferta (
+             p_evento   IN VARCHAR2,
+             p_setor    IN VARCHAR2,...
+Show more...
+
+
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.180
+
+
+SQL> DECLARE
+         v_pedido    Pedido.id_pedido%TYPE;
+         v_dt_pedido DATE;
+     ...
+Show more...
+
+
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.134
+
+
+SQL> UPDATE Oferta SET preco = 65
+      WHERE id_evento = (SELECT id_evento FROM Evento WHERE nome = 'Sabores do Nordeste')
+        AND id_setor  = (SELECT id_setor  FROM Setor  WHERE nome = 'Pista')
+        AND id_lote   = (SELECT id_lote   FROM Lote   WHERE nome = 'Segundo Lote')
+
+
+
+1 row updated.
+
+Elapsed: 00:00:00.011
+
+
+SQL> UPDATE Oferta SET preco = 320
+      WHERE id_evento = (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027')
+        AND id_setor  = (SELECT id_setor  FROM Setor  WHERE nome = 'Pista')
+        AND id_lote   = (SELECT id_lote   FROM Lote   WHERE nome = 'Primeiro Lote')
+
+
+
+1 row updated.
+
+Elapsed: 00:00:00.008
+
+
+SQL> UPDATE Oferta SET preco = 380
+      WHERE id_evento = (SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026')
+        AND id_setor  = (SELECT id_setor  FROM Setor  WHERE nome = 'Plateia')
+        AND id_lote   = (SELECT id_lote   FROM Lote   WHERE nome = 'Segundo Lote')
+
+
+
+1 row updated.
+
+Elapsed: 00:00:00.007
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '20345678000119'),
+             DATE '2024-03-01', DATE '2025-06-30',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.021
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '20345678000119'),
+             DATE '2025-07-01', NULL,...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '10234567000108'),
+             DATE '2024-04-01', NULL,...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '40567890000131'),
+             DATE '2025-01-01', DATE '2025-12-31',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '60473829150'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '30456789000120'),
+             DATE '2024-05-10', NULL,...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '10234567000108'),
+             DATE '2024-03-15', DATE '2025-09-30',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '20345678000119'),
+             DATE '2025-10-01', NULL,...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '41857293610'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '30456789000120'),
+             DATE '2025-02-01', NULL,...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '96320481750'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '10234567000108'),
+             DATE '2025-03-01', DATE '2026-02-28',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Vinculo (id_produtor, id_empresa, dt_inicio, dt_fim, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '58714029366'),
+             (SELECT id_criador FROM Empresa  WHERE cnpj = '20345678000119'),
+             DATE '2025-08-01', NULL,...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-08-01', DATE '2025-12-05')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.017
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-07-01', DATE '2025-08-31')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-10-15', DATE '2025-12-01')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'),
+             DATE '2026-01-10', DATE '2026-04-25')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'),
+             DATE '2026-03-01', DATE '2026-06-20')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '73096158240'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'),
+             DATE '2026-02-15', DATE '2026-06-25')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '60473829150'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Rock na Praça'),
+             DATE '2025-11-10', DATE '2026-04-05')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '41857293610'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Rock na Praça'),
+             DATE '2026-01-05', DATE '2026-04-10')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '96320481750'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'),
+             DATE '2026-01-15', DATE '2026-04-30')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.003
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'),
+             DATE '2026-07-01', NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '58714029366'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'),
+             DATE '2026-07-15', NULL)
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Atuacao (id_produtor, id_evento, dt_inicio, dt_fim)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Sabores do Nordeste'),
+             DATE '2026-04-20', DATE '2026-09-05')
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-08-01',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.017
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-08-01',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-07-01',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Festival Maré Viva 2025'),
+             DATE '2025-10-15',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'),
+             DATE '2026-01-10',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'),
+             DATE '2026-01-10',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '15934782605'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'),
+             DATE '2026-03-01',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '73096158240'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'),
+             DATE '2026-02-15',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '73096158240'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Noite do Forró Pé de Serra'),
+             DATE '2026-02-15',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '60473829150'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Rock na Praça'),
+             DATE '2025-11-10',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '60473829150'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Rock na Praça'),
+             DATE '2025-11-10',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '41857293610'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Rock na Praça'),
+             DATE '2026-01-05',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '96320481750'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Recife Tech Summit 2026'),
+             DATE '2026-01-15',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '82619475030'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'),
+             DATE '2026-07-01',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '58714029366'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'),
+             DATE '2026-07-15',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '58714029366'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027'),
+             DATE '2026-07-15',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.005
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Sabores do Nordeste'),
+             DATE '2026-04-20',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> INSERT INTO Desempenha (id_produtor, id_evento, dt_inicio, id_funcao)
+     VALUES ((SELECT id_criador FROM Produtor WHERE cpf = '29581367408'),
+             (SELECT id_evento FROM Evento WHERE nome = 'Sabores do Nordeste'),
+             DATE '2026-04-20',...
+Show more...
+
+
+
+1 row inserted.
+
+Elapsed: 00:00:00.004
+
+
+SQL> COMMIT
+
+
+
+Commit complete.
+
+Elapsed: 00:00:00.002

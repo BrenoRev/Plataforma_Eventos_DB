@@ -1,0 +1,235 @@
+SQL> SELECT 'USUARIO' AS tabela, COUNT(*) AS qtd FROM Usuario UNION ALL
+     SELECT 'TELEFONE', COUNT(*) FROM Telefone UNION ALL
+     SELECT 'CRIADOR', COUNT(*) FROM Criador UNION ALL
+     SELECT 'PRODUTOR', COUNT(*) FROM Produtor UNION ALL...
+Show more...
+
+TABELA             QTD 
+------------------ --- 
+USUARIO            30  
+TELEFONE           40  
+CRIADOR            12  
+PRODUTOR           8   
+EMPRESA            4   
+ENDERECO           12  
+EVENTO             10  
+CATEGORIA_EVENTO   19  
+SETOR              6   
+LOTE               5   
+FUNCAO             8   
+OFERTA             40  
+PEDIDO             57  
+FORMA_PAGAMENTO    64  
+INGRESSO           831 
+VINCULO            10  
+ATUACAO            12  
+DESEMPENHA         18  
+
+Elapsed: 00:00:00.046
+18 rows selected. 
+
+
+
+SQL> SELECT c.id_criador
+       FROM Criador c
+      WHERE NOT EXISTS (SELECT 1 FROM Produtor p WHERE p.id_criador = c.id_criador)
+        AND NOT EXISTS (SELECT 1 FROM Empresa e  WHERE e.id_criador = c.id_criador)
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT c.id_criador
+       FROM Criador c
+      WHERE EXISTS (SELECT 1 FROM Produtor p WHERE p.id_criador = c.id_criador)
+        AND EXISTS (SELECT 1 FROM Empresa e  WHERE e.id_criador = c.id_criador)
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT c.id_criador, c.tipo_criador
+       FROM Criador c
+      WHERE (c.tipo_criador = 'PRODUTOR' AND NOT EXISTS (SELECT 1 FROM Produtor p WHERE p.id_criador = c.id_criador))
+         OR (c.tipo_criador = 'EMPRESA'  AND NOT EXISTS (SELECT 1 FROM Empresa e  WHERE e.id_criador = c.id_criador))
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT e.id_evento, e.nome
+       FROM Evento e
+      WHERE NOT EXISTS (SELECT 1 FROM Oferta o WHERE o.id_evento = e.id_evento)
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT p.id_pedido
+       FROM Pedido p
+      WHERE NOT EXISTS (SELECT 1 FROM Ingresso i WHERE i.id_pedido = p.id_pedido)
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT a.id_produtor, a.id_evento, a.dt_inicio
+       FROM Atuacao a
+      WHERE NOT EXISTS (SELECT 1 FROM Desempenha d
+                         WHERE d.id_produtor = a.id_produtor AND d.id_evento = a.id_evento AND d.dt_inicio = a.dt_inicio)
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT DISTINCT p.id_pedido
+       FROM Pedido p
+       JOIN Ingresso i ON i.id_pedido = p.id_pedido
+       JOIN Oferta   o ON o.id_evento = i.id_evento AND o.id_setor = i.id_setor AND o.id_lote = i.id_lote...
+Show more...
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT i.cpf AS indicado, d.cpf AS indicador
+       FROM Usuario i
+       JOIN Usuario d ON d.cpf = i.cpf_indicador
+      WHERE d.dt_cadastro > i.dt_cadastro
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT a.id_produtor, a.id_empresa, a.dt_inicio
+       FROM Vinculo a
+       JOIN Vinculo b ON b.id_produtor = a.id_produtor AND b.id_empresa = a.id_empresa AND b.dt_inicio > a.dt_inicio
+      WHERE a.dt_fim IS NULL OR a.dt_fim >= b.dt_inicio
+
+
+0 rows selected. 
+
+
+
+SQL> SELECT e.nome AS evento, s.nome AS setor, l.nome AS lote,
+            COUNT(*) AS emitidos, COUNT(i.id_pedido) AS vendidos,
+            ROUND(100 * COUNT(i.id_pedido) / COUNT(*), 1) AS pct_vendido
+       FROM Ingresso i...
+Show more...
+
+EVENTO                                 SETOR           LOTE               EMITIDOS VENDIDOS PCT_VENDIDO 
+-------------------------------------- --------------- ------------------ -------- -------- ----------- 
+Copa Nordeste de Futevôlei             Arquibancada    Primeiro Lote      30       10       33.3        
+Copa Nordeste de Futevôlei             Camarote        Primeiro Lote      10       2        20          
+Copa Nordeste de Futevôlei             Arquibancada    Segundo Lote       30       2        6.7         
+Festival Maré Viva 2025                Pista           Lote Promocional   20       20       100         
+Festival Maré Viva 2025                Pista           Primeiro Lote      30       12       40          
+Festival Maré Viva 2025                Pista Premium   Primeiro Lote      15       3        20          
+Festival Maré Viva 2025                VIP             Primeiro Lote      10       2        20          
+Festival Maré Viva 2025                Pista           Segundo Lote       30       17       56.7        
+Festival Maré Viva 2025                Pista Premium   Segundo Lote       15       5        33.3        
+Festival Maré Viva 2025                VIP             Segundo Lote       10       2        20          
+Festival de Jazz de Salvador           Arquibancada    Primeiro Lote      20       4        20          
+Festival de Jazz de Salvador           Pista           Primeiro Lote      30       10       33.3        
+Festival de Jazz de Salvador           VIP             Primeiro Lote      8        1        12.5        
+Festival de Jazz de Salvador           Pista           Segundo Lote       30       3        10          
+Noite do Forró Pé de Serra             Camarote        Primeiro Lote      12       4        33.3        
+Noite do Forró Pé de Serra             Pista           Primeiro Lote      30       30       100         
+Noite do Forró Pé de Serra             Camarote        Segundo Lote       12       6        50          
+Noite do Forró Pé de Serra             Pista           Segundo Lote       30       20       66.7        
+Recife Tech Summit 2026                Plateia         Lote Promocional   20       20       100         
+Recife Tech Summit 2026                Plateia         Primeiro Lote      30       22       73.3        
+Recife Tech Summit 2026                VIP             Primeiro Lote      10       3        30          
+Recife Tech Summit 2026                Plateia         Segundo Lote       20       11       55          
+Rock na Praça                          Pista           Lote Promocional   20       20       100         
+Rock na Praça                          Arquibancada    Primeiro Lote      25       10       40          
+Rock na Praça                          Pista           Primeiro Lote      30       20       66.7        
+Rock na Praça                          Arquibancada    Segundo Lote       25       3        12          
+Rock na Praça                          Pista           Segundo Lote       30       12       40          
+Réveillon Orla de Boa Viagem 2027      Pista           Lote Promocional   20       20       100         
+Réveillon Orla de Boa Viagem 2027      Pista           Primeiro Lote      30       10       33.3        
+Réveillon Orla de Boa Viagem 2027      Pista Premium   Primeiro Lote      12       2        16.7        
+Réveillon Orla de Boa Viagem 2027      VIP             Primeiro Lote      8        2        25          
+Sabores do Nordeste                    Pista           Primeiro Lote      30       14       46.7        
+Sabores do Nordeste                    VIP             Primeiro Lote      10       5        50          
+Sabores do Nordeste                    Pista           Segundo Lote       30       16       53.3        
+Stand-up Pernambuco: Risadas ao Vivo   Camarote        Primeiro Lote      8        2        25          
+Stand-up Pernambuco: Risadas ao Vivo   Plateia         Primeiro Lote      25       10       40          
+Stand-up Pernambuco: Risadas ao Vivo   Plateia         Segundo Lote       25       11       44          
+Teatro: A Última Sessão                Camarote        Primeiro Lote      6        2        33.3        
+Teatro: A Última Sessão                Plateia         Primeiro Lote      25       10       40          
+Teatro: A Última Sessão                Plateia         Segundo Lote       20       3        15          
+
+Elapsed: 00:00:00.025
+40 rows selected. 
+
+
+
+SQL> SELECT e.nome AS evento, s.nome AS setor, l.nome AS lote,
+            o.preco AS preco_atual, i.preco_pago, COUNT(*) AS qtd
+       FROM Ingresso i
+       JOIN Oferta o ON o.id_evento = i.id_evento AND o.id_setor = i.id_setor AND o.id_lote = i.id_lote...
+Show more...
+
+EVENTO                              SETOR     LOTE            PRECO_ATUAL PRECO_PAGO QTD 
+----------------------------------- --------- --------------- ----------- ---------- --- 
+Recife Tech Summit 2026             Plateia   Segundo Lote    380         350        11  
+Réveillon Orla de Boa Viagem 2027   Pista     Primeiro Lote   320         300        10  
+Sabores do Nordeste                 Pista     Segundo Lote    65          60         16  
+
+Elapsed: 00:00:00.081
+3 rows selected. 
+
+
+
+SQL> SELECT e.nome
+       FROM Evento e
+      WHERE NOT EXISTS (SELECT 1 FROM Atuacao a WHERE a.id_evento = e.id_evento)
+
+NOME                                   
+-------------------------------------- 
+Teatro: A Última Sessão                
+Stand-up Pernambuco: Risadas ao Vivo   
+Copa Nordeste de Futevôlei             
+Festival de Jazz de Salvador           
+
+Elapsed: 00:00:00.006
+4 rows selected. 
+
+
+
+SQL> SELECT u.primeiro_nome, u.sobrenome, e.nome AS evento, COUNT(*) AS atuacoes
+       FROM Atuacao a
+       JOIN Produtor p ON p.id_criador = a.id_produtor
+       JOIN Usuario  u ON u.cpf = p.cpf...
+Show more...
+
+PRIMEIRO_NOME SOBRENOME EVENTO                    ATUACOES 
+------------- --------- ------------------------- -------- 
+Thiago        Barros    Festival Maré Viva 2025   2        
+
+Elapsed: 00:00:00.045
+1 rows selected. 
+
+
+
+SQL> SELECT DISTINCT u.primeiro_nome, u.sobrenome
+       FROM Evento e
+       JOIN Produtor p ON p.id_criador = e.id_criador
+       JOIN Usuario  u ON u.cpf = p.cpf...
+Show more...
+
+PRIMEIRO_NOME SOBRENOME  
+------------- ---------- 
+Fernanda      Siqueira   
+
+Elapsed: 00:00:00.013
+1 rows selected. 
