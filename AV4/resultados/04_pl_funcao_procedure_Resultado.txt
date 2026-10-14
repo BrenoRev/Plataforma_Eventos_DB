@@ -1,0 +1,126 @@
+SQL> -- Função e procedure avulsas. Rodar depois do 01_sql_ddl_dml.sql.
+SQL> -- A função é usada pela package do script 05, então este script vem antes.
+SQL> 
+SQL> 
+SQL> -- fn_ingressos_disponiveis: pergunta 22 do minimundo.
+SQL> -- Quantos ingressos de uma oferta ainda não foram vendidos.
+SQL> -- Se a oferta não existe, o SELECT com GROUP BY não devolve linha e cai no
+SQL> -- NO_DATA_FOUND. Pode ser chamada de dentro de um SELECT (script 07).
+SQL> CREATE OR REPLACE FUNCTION fn_ingressos_disponiveis (
+  2      p_id_evento IN Oferta.id_evento%TYPE,
+  3      p_id_setor  IN Oferta.id_setor%TYPE,
+  4      p_id_lote   IN Oferta.id_lote%TYPE
+  5  ) RETURN NUMBER
+  6  IS
+  7      v_disponiveis NUMBER;
+  8  BEGIN
+  9      SELECT COUNT(i.num_ingresso) - COUNT(i.id_pedido)
+ 10        INTO v_disponiveis
+ 11        FROM Oferta o
+ 12        LEFT JOIN Ingresso i
+ 13          ON i.id_evento = o.id_evento AND i.id_setor = o.id_setor AND i.id_lote = o.id_lote
+ 14       WHERE o.id_evento = p_id_evento
+ 15         AND o.id_setor  = p_id_setor
+ 16         AND o.id_lote   = p_id_lote
+ 17       GROUP BY o.id_evento, o.id_setor, o.id_lote;
+ 18  
+ 19      RETURN v_disponiveis;
+ 20  EXCEPTION
+ 21      WHEN NO_DATA_FOUND THEN
+ 22          RAISE_APPLICATION_ERROR(-20010, 'Oferta inexistente (evento ' || p_id_evento
+ 23                                  || ', setor ' || p_id_setor || ', lote ' || p_id_lote || ')');
+ 24  END fn_ingressos_disponiveis;
+ 25  /
+
+Function created.
+
+SQL> 
+SQL> 
+SQL> -- pr_relatorio_evento: relatório 3 do minimundo para um evento.
+SQL> -- Imprime os dados do evento e, para cada oferta, emitidos, vendidos, receita
+SQL> -- e a situação da oferta.
+SQL> CREATE OR REPLACE PROCEDURE pr_relatorio_evento (
+  2      p_id_evento IN Evento.id_evento%TYPE
+  3  )
+  4  IS
+  5      v_evento    Evento%ROWTYPE;
+  6      v_local     Endereco%ROWTYPE;
+  7      v_criador   VARCHAR2(200);
+  8      v_pct       NUMBER(5,1);
+  9      v_situacao  VARCHAR2(20);
+ 10      v_vendidos  NUMBER := 0;
+ 11      v_receita   NUMBER := 0;
+ 12  
+ 13      CURSOR c_ofertas IS
+ 14          SELECT s.nome                    AS setor,
+ 15                 l.nome                    AS lote,
+ 16                 o.preco,
+ 17                 COUNT(i.num_ingresso)     AS emitidos,
+ 18                 COUNT(i.id_pedido)        AS vendidos,
+ 19                 NVL(SUM(i.preco_pago), 0) AS receita
+ 20            FROM Oferta o
+ 21            JOIN Setor s ON s.id_setor = o.id_setor
+ 22            JOIN Lote  l ON l.id_lote  = o.id_lote
+ 23            LEFT JOIN Ingresso i
+ 24              ON i.id_evento = o.id_evento AND i.id_setor = o.id_setor AND i.id_lote = o.id_lote
+ 25           WHERE o.id_evento = p_id_evento
+ 26           GROUP BY s.nome, l.nome, l.ordem, o.preco
+ 27           ORDER BY l.ordem, s.nome;
+ 28  BEGIN
+ 29      SELECT * INTO v_evento FROM Evento   WHERE id_evento = p_id_evento;
+ 30      SELECT * INTO v_local  FROM Endereco WHERE cep = v_evento.cep;
+ 31  
+ 32      SELECT COALESCE(em.nome, u.primeiro_nome || ' ' || u.sobrenome)
+ 33        INTO v_criador
+ 34        FROM Criador c
+ 35        LEFT JOIN Empresa  em ON em.id_criador = c.id_criador
+ 36        LEFT JOIN Produtor pr ON pr.id_criador = c.id_criador
+ 37        LEFT JOIN Usuario  u  ON u.cpf         = pr.cpf
+ 38       WHERE c.id_criador = v_evento.id_criador;
+ 39  
+ 40      DBMS_OUTPUT.PUT_LINE('=== ' || v_evento.nome || ' ===');
+ 41      DBMS_OUTPUT.PUT_LINE(TO_CHAR(v_evento.dt_realizacao, 'DD/MM/YYYY') || ' | '
+ 42                           || v_local.cidade || '/' || v_local.uf || ' | ' || v_evento.status);
+ 43      DBMS_OUTPUT.PUT_LINE('Criador: ' || v_criador);
+ 44  
+ 45      FOR r IN c_ofertas LOOP
+ 46          IF r.emitidos = 0 THEN
+ 47              v_pct := 0;
+ 48          ELSE
+ 49              v_pct := ROUND(100 * r.vendidos / r.emitidos, 1);
+ 50          END IF;
+ 51  
+ 52          CASE
+ 53              WHEN r.emitidos = 0 THEN
+ 54                  v_situacao := 'SEM INGRESSOS';
+ 55              WHEN r.vendidos = r.emitidos THEN
+ 56                  v_situacao := 'ESGOTADA';
+ 57              WHEN v_evento.status <> 'ATIVO' AND v_pct < 50 THEN
+ 58                  v_situacao := 'ENCALHADA';
+ 59              WHEN v_evento.status <> 'ATIVO' THEN
+ 60                  v_situacao := 'VENDA PARCIAL';
+ 61              WHEN v_pct >= 70 THEN
+ 62                  v_situacao := 'QUASE ESGOTADA';
+ 63              ELSE
+ 64                  v_situacao := 'EM VENDA';
+ 65          END CASE;
+ 66  
+ 67          DBMS_OUTPUT.PUT_LINE('  ' || RPAD(r.setor || ' / ' || r.lote, 32)
+ 68                               || ' R$ ' || LPAD(TO_CHAR(r.preco, 'FM9990.00'), 8)
+ 69                               || ' | ' || LPAD(r.vendidos, 3) || '/' || RPAD(r.emitidos, 3)
+ 70                               || ' (' || LPAD(TO_CHAR(v_pct, 'FM990.0'), 5) || '%) | '
+ 71                               || v_situacao);
+ 72  
+ 73          v_vendidos := v_vendidos + r.vendidos;
+ 74          v_receita  := v_receita + r.receita;
+ 75      END LOOP;
+ 76  
+ 77      DBMS_OUTPUT.PUT_LINE('  Total: ' || v_vendidos || ' ingressos vendidos, receita R$ '
+ 78                           || TO_CHAR(v_receita, 'FM999G990D00'));
+ 79  EXCEPTION
+ 80      WHEN NO_DATA_FOUND THEN
+ 81          DBMS_OUTPUT.PUT_LINE('Evento ' || p_id_evento || ' nao encontrado.');
+ 82  END pr_relatorio_evento;
+ 83  /
+
+Procedure created.

@@ -1,0 +1,560 @@
+SQL> -- Consultas da AV4. Rodar depois do 01_sql_ddl_dml.sql.
+SQL> --
+SQL> -- Cada consulta responde a uma pergunta (seção 5) ou a um relatório (seção 6)
+SQL> -- do minimundo. O cabeçalho diz qual é e quais itens do checklist SQL ela usa.
+SQL> 
+SQL> 
+SQL> -- 1. Perguntas 1 e 2: quem indicou cada usuário cadastrado a partir de 2025,
+SQL> -- em que data, e a idade do indicado.
+SQL> -- Checklist: SELECT-FROM-WHERE (junção escrita no WHERE), ORDER BY
+SQL> SELECT ind.primeiro_nome || ' ' || ind.sobrenome      AS usuario,
+  2         TRUNC(MONTHS_BETWEEN(SYSDATE, ind.dt_nascimento) / 12) AS idade,
+  3         quem.primeiro_nome || ' ' || quem.sobrenome    AS indicado_por,
+  4         ind.dt_indicacao
+  5    FROM Usuario ind, Usuario quem
+  6   WHERE quem.cpf = ind.cpf_indicador
+  7     AND ind.dt_cadastro >= DATE '2025-01-01'
+  8   ORDER BY ind.dt_indicacao;
+
+USUARIO                             IDADE INDICADO_POR                   DT_INDICAC
+------------------------------ ---------- ------------------------------ ----------
+Felipe Araújo                          40 Gustavo Ribeiro                13/01/2025
+Natália Pinheiro                       24 Beatriz Moura                  02/02/2025
+Aline Cordeiro                         33 Patrícia Lopes                 27/05/2025
+Rodrigo Santana                        42 Felipe Araújo                  04/07/2025
+Letícia Brandão                        23 Isabela Freitas                12/09/2025
+Sofia Medeiros                         22 Natália Pinheiro               08/12/2025
+Paulo Henrique Vasconcelos             44 Rodrigo Santana                21/01/2026
+Renata Queiroz                         35 Aline Cordeiro                 26/02/2026
+Eduardo Guedes                         30 Vinícius Maciel                14/04/2026
+Tatiana Lacerda                        38 Sofia Medeiros                 09/06/2026
+Matheus Oliveira                       20 Eduardo Guedes                 03/08/2026
+Yasmin Correia                         26 Ana Beatriz Albuquerque        14/10/2026
+
+12 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 2. Relatório 13: programa de indicação. Para cada indicador, quantos
+SQL> -- indicados trouxe, quantos deles já compraram e quanto os indicados gastaram.
+SQL> -- O LEFT JOIN mantém o indicado que nunca fez pedido.
+SQL> -- Checklist: INNER JOIN, LEFT JOIN, COUNT, GROUP BY, ORDER BY
+SQL> SELECT quem.primeiro_nome || ' ' || quem.sobrenome AS indicador,
+  2         COUNT(DISTINCT ind.cpf)                     AS indicados,
+  3         COUNT(DISTINCT p.cpf_usuario)               AS indicados_compradores,
+  4         NVL(SUM(i.preco_pago), 0)                   AS receita_dos_indicados
+  5    FROM Usuario quem
+  6   INNER JOIN Usuario ind ON ind.cpf_indicador = quem.cpf
+  7    LEFT JOIN Pedido p    ON p.cpf_usuario = ind.cpf
+  8    LEFT JOIN Ingresso i  ON i.id_pedido   = p.id_pedido
+  9   GROUP BY quem.cpf, quem.primeiro_nome, quem.sobrenome
+ 10   ORDER BY indicados DESC, receita_dos_indicados DESC;
+
+INDICADOR                       INDICADOS INDICADOS_COMPRADORES RECEITA_DOS_INDICADOS
+------------------------------ ---------- --------------------- ---------------------
+Ana Beatriz Albuquerque                 3                     1                  1200
+Patrícia Lopes                          2                     2                  3940
+Mariana Cavalcanti                      2                     0                     0
+Gustavo Ribeiro                         1                     1                  5100
+Felipe Araújo                           1                     1                  4220
+Rodrigo Santana                         1                     1                  4060
+Aline Cordeiro                          1                     1                  3120
+Rafael Tavares                          1                     1                  2640
+Eduardo Guedes                          1                     1                  2240
+Fernanda Siqueira                       1                     1                  2000
+Larissa Gomes                           1                     1                  1980
+Sofia Medeiros                          1                     1                  1600
+Beatriz Moura                           1                     1                  1540
+Natália Pinheiro                        1                     1                  1480
+Vinícius Maciel                         1                     1                  1170
+Isabela Freitas                         1                     1                   830
+Diego Fernandes                         1                     1                   750
+Juliana Monteiro                        1                     0                     0
+Carlos Eduardo Pereira                  1                     0                     0
+
+19 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 3. Relatório 8: receita por mês no primeiro semestre de 2026, pela data do pedido.
+SQL> -- Checklist: BETWEEN, INNER JOIN, COUNT, GROUP BY, ORDER BY
+SQL> SELECT TO_CHAR(p.dt_realizacao, 'YYYY-MM') AS mes,
+  2         COUNT(DISTINCT p.id_pedido)         AS pedidos,
+  3         COUNT(*)                            AS ingressos,
+  4         SUM(i.preco_pago)                   AS receita
+  5    FROM Pedido p
+  6   INNER JOIN Ingresso i ON i.id_pedido = p.id_pedido
+  7   WHERE p.dt_realizacao BETWEEN DATE '2026-01-01' AND DATE '2026-06-30'
+  8   GROUP BY TO_CHAR(p.dt_realizacao, 'YYYY-MM')
+  9   ORDER BY mes;
+
+MES        PEDIDOS  INGRESSOS    RECEITA
+------- ---------- ---------- ----------
+2026-01          4         38       4980
+2026-02          3         27       5420
+2026-03          9         67       9030
+2026-04          5         34       5280
+2026-05          3         24       2520
+2026-06          3         22       1850
+
+6 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 4. Relatório 9: vendas por cidade nos estados do Nordeste.
+SQL> -- Usa a view vw_venda_ingresso, que já traz cidade e UF do local do evento.
+SQL> -- Checklist: IN, COUNT, GROUP BY, ORDER BY
+SQL> SELECT uf,
+  2         cidade,
+  3         COUNT(DISTINCT id_evento) AS eventos,
+  4         COUNT(*)                  AS ingressos_vendidos,
+  5         SUM(preco_pago)           AS receita
+  6    FROM vw_venda_ingresso
+  7   WHERE uf IN ('AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE')
+  8   GROUP BY uf, cidade
+  9   ORDER BY receita DESC;
+
+UF CIDADE          EVENTOS INGRESSOS_VENDIDOS    RECEITA
+-- ------------ ---------- ------------------ ----------
+PE Recife                4                174      36820
+PE Caruaru               1                 60       5140
+BA Salvador              1                 18       2220
+PE Olinda                1                 35       2190
+CE Fortaleza             1                 14       1000
+
+5 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 5. Pergunta 13: busca de eventos por palavra (como a busca do site),
+SQL> -- mostrando as categorias de cada um numa linha só.
+SQL> -- Checklist: LIKE, INNER JOIN, GROUP BY, ORDER BY
+SQL> SELECT e.nome,
+  2         e.dt_realizacao,
+  3         en.cidade,
+  4         LISTAGG(ce.categoria, ', ') WITHIN GROUP (ORDER BY ce.categoria) AS categorias
+  5    FROM Evento e
+  6   INNER JOIN Endereco en         ON en.cep       = e.cep
+  7   INNER JOIN Categoria_Evento ce ON ce.id_evento = e.id_evento
+  8   WHERE UPPER(e.nome)      LIKE '%FESTIVAL%'
+  9      OR UPPER(e.descricao) LIKE '%MUSICA%'
+ 10   GROUP BY e.id_evento, e.nome, e.dt_realizacao, en.cidade
+ 11   ORDER BY e.dt_realizacao;
+
+NOME                                 DT_REALIZA CIDADE       CATEGORIAS
+------------------------------------ ---------- ------------ ----------------------------------------
+Festival Maré Viva 2025              22/11/2025 Recife       FESTIVAL, MUSICA
+Sabores do Nordeste                  22/08/2026 Olinda       CULTURA, GASTRONOMIA
+Festival de Jazz de Salvador         14/11/2026 Salvador     CULTURA, FESTIVAL, MUSICA
+
+3 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 6. Pergunta 10 e relatório 11: produtores vinculados hoje a cada empresa
+SQL> -- (dt_fim nulo), com cargo e há quantos meses estão nele.
+SQL> -- Checklist: IS NULL, INNER JOIN, ORDER BY
+SQL> SELECT em.nome                                AS empresa,
+  2         u.primeiro_nome || ' ' || u.sobrenome  AS produtor,
+  3         f.nome                                 AS cargo,
+  4         v.dt_inicio,
+  5         TRUNC(MONTHS_BETWEEN(SYSDATE, v.dt_inicio)) AS meses_no_cargo
+  6    FROM Vinculo v
+  7   INNER JOIN Empresa em  ON em.id_criador = v.id_empresa
+  8   INNER JOIN Produtor pr ON pr.id_criador = v.id_produtor
+  9   INNER JOIN Usuario u   ON u.cpf         = pr.cpf
+ 10   INNER JOIN Funcao f    ON f.id_funcao   = v.id_funcao
+ 11   WHERE v.dt_fim IS NULL
+ 12   ORDER BY em.nome, meses_no_cargo DESC;
+
+EMPRESA                        PRODUTOR                       CARGO                    DT_INICIO  MESES_NO_CARGO
+------------------------------ ------------------------------ ------------------------ ---------- --------------
+Cena Aberta Cultural ME        Juliana Monteiro               Curadoria                10/05/2024             29
+Cena Aberta Cultural ME        Lucas Nogueira                 Logística                01/02/2025             20
+Maré Alta Entretenimento S.A.  Mariana Cavalcanti             Direção Artística        01/07/2025             15
+Maré Alta Entretenimento S.A.  Bruno Carvalho                 Captação de Patrocínio   01/08/2025             14
+Maré Alta Entretenimento S.A.  Thiago Barros                  Produção Executiva       01/10/2025             12
+Pulso Produções LTDA           Rafael Tavares                 Logística                01/04/2024             30
+
+6 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 7. Relatório 15: preço pago por evento e setor. Menor, maior e médio
+SQL> -- mostram quanto o preço variou entre os lotes do mesmo setor.
+SQL> -- Checklist: MIN, MAX, AVG, COUNT, GROUP BY, ORDER BY
+SQL> SELECT evento,
+  2         setor,
+  3         COUNT(*)                         AS vendidos,
+  4         MIN(preco_pago)                  AS menor_preco,
+  5         MAX(preco_pago)                  AS maior_preco,
+  6         ROUND(AVG(preco_pago), 2)        AS ticket_medio,
+  7         MAX(preco_pago) - MIN(preco_pago) AS variacao
+  8    FROM vw_venda_ingresso
+  9   GROUP BY evento, setor
+ 10   ORDER BY evento, ticket_medio DESC;
+
+EVENTO                               SETOR            VENDIDOS MENOR_PRECO MAIOR_PRECO TICKET_MEDIO   VARIACAO
+------------------------------------ -------------- ---------- ----------- ----------- ------------ ----------
+Copa Nordeste de Futevôlei           Camarote                2         180         180          180          0
+Copa Nordeste de Futevôlei           Arquibancada           12          50          70        53.33         20
+Festival Maré Viva 2025              VIP                     4         480         560          520         80
+Festival Maré Viva 2025              Pista Premium           8         260         320        297.5         60
+Festival Maré Viva 2025              Pista                  49          90         180       133.47         90
+Festival de Jazz de Salvador         VIP                     1         350         350          350          0
+Festival de Jazz de Salvador         Pista                  13         110         150       119.23         40
+Festival de Jazz de Salvador         Arquibancada            4          80          80           80          0
+Noite do Forró Pé de Serra           Camarote               10         150         190          174         40
+Noite do Forró Pé de Serra           Pista                  50          60          80           68         20
+Recife Tech Summit 2026              VIP                     3         600         600          600          0
+Recife Tech Summit 2026              Plateia                53         150         350       233.02        200
+Rock na Praça                        Pista                  52          80         160       113.85         80
+Rock na Praça                        Arquibancada           13          90         110        94.62         20
+Réveillon Orla de Boa Viagem 2027    VIP                     2         900         900          900          0
+Réveillon Orla de Boa Viagem 2027    Pista Premium           2         450         450          450          0
+Réveillon Orla de Boa Viagem 2027    Pista                  30         200         300       233.33        100
+Sabores do Nordeste                  VIP                     5         120         120          120          0
+Sabores do Nordeste                  Pista                  30          45          60           53         15
+Stand-up Pernambuco: Risadas ao Vivo Camarote                2         140         140          140          0
+Stand-up Pernambuco: Risadas ao Vivo Plateia                21          70          90        80.48         20
+Teatro: A Última Sessão              Camarote                2         200         200          200          0
+Teatro: A Última Sessão              Plateia                13         100         130       106.92         30
+
+23 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 8. Relatório 3: ofertas encalhadas. Ofertas de eventos já encerrados que
+SQL> -- venderam menos da metade dos ingressos emitidos.
+SQL> -- Checklist: INNER JOIN, COUNT, GROUP BY, HAVING, ORDER BY
+SQL> SELECT e.nome                                       AS evento,
+  2         s.nome                                       AS setor,
+  3         l.nome                                       AS lote,
+  4         COUNT(*)                                     AS emitidos,
+  5         COUNT(i.id_pedido)                           AS vendidos,
+  6         COUNT(*) - COUNT(i.id_pedido)                AS sobra,
+  7         ROUND(100 * COUNT(i.id_pedido) / COUNT(*), 1) AS pct_vendido
+  8    FROM Ingresso i
+  9   INNER JOIN Evento e ON e.id_evento = i.id_evento
+ 10   INNER JOIN Setor s  ON s.id_setor  = i.id_setor
+ 11   INNER JOIN Lote l   ON l.id_lote   = i.id_lote
+ 12   WHERE e.status = 'ENCERRADO'
+ 13   GROUP BY e.nome, s.nome, l.nome
+ 14  HAVING COUNT(i.id_pedido) < 0.5 * COUNT(*)
+ 15   ORDER BY pct_vendido;
+
+EVENTO                               SETOR          LOTE                EMITIDOS   VENDIDOS      SOBRA PCT_VENDIDO
+------------------------------------ -------------- ----------------- ---------- ---------- ---------- -----------
+Rock na Praça                        Arquibancada   Segundo Lote              25          3         22          12
+Teatro: A Última Sessão              Plateia        Segundo Lote              20          3         17          15
+Festival Maré Viva 2025              Pista Premium  Primeiro Lote             15          3         12          20
+Festival Maré Viva 2025              VIP            Primeiro Lote             10          2          8          20
+Festival Maré Viva 2025              VIP            Segundo Lote              10          2          8          20
+Stand-up Pernambuco: Risadas ao Vivo Camarote       Primeiro Lote              8          2          6          25
+Recife Tech Summit 2026              VIP            Primeiro Lote             10          3          7          30
+Noite do Forró Pé de Serra           Camarote       Primeiro Lote             12          4          8        33.3
+Festival Maré Viva 2025              Pista Premium  Segundo Lote              15          5         10        33.3
+Teatro: A Última Sessão              Camarote       Primeiro Lote              6          2          4        33.3
+Stand-up Pernambuco: Risadas ao Vivo Plateia        Primeiro Lote             25         10         15          40
+Rock na Praça                        Arquibancada   Primeiro Lote             25         10         15          40
+Teatro: A Última Sessão              Plateia        Primeiro Lote             25         10         15          40
+Rock na Praça                        Pista          Segundo Lote              30         12         18          40
+Festival Maré Viva 2025              Pista          Primeiro Lote             30         12         18          40
+Stand-up Pernambuco: Risadas ao Vivo Plateia        Segundo Lote              25         11         14          44
+Sabores do Nordeste                  Pista          Primeiro Lote             30         14         16        46.7
+
+17 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 9. Pergunta 24: clientes que gastaram mais que a média dos compradores,
+SQL> -- com quantos pedidos fizeram.
+SQL> -- A subconsulta calcula o gasto de cada comprador e tira a média.
+SQL> -- Checklist: SUBCONSULTA COM OPERADOR RELACIONAL, HAVING, AVG, COUNT, GROUP BY
+SQL> SELECT u.primeiro_nome || ' ' || u.sobrenome AS cliente,
+  2         COUNT(DISTINCT p.id_pedido)           AS pedidos,
+  3         SUM(i.preco_pago)                     AS total_gasto
+  4    FROM Usuario u
+  5   INNER JOIN Pedido p   ON p.cpf_usuario = u.cpf
+  6   INNER JOIN Ingresso i ON i.id_pedido   = p.id_pedido
+  7   GROUP BY u.cpf, u.primeiro_nome, u.sobrenome
+  8  HAVING SUM(i.preco_pago) > (SELECT AVG(gasto)
+  9                                FROM (SELECT SUM(i2.preco_pago) AS gasto
+ 10                                        FROM Pedido p2
+ 11                                        JOIN Ingresso i2 ON i2.id_pedido = p2.id_pedido
+ 12                                       GROUP BY p2.cpf_usuario))
+ 13   ORDER BY total_gasto DESC;
+
+CLIENTE                           PEDIDOS TOTAL_GASTO
+------------------------------ ---------- -----------
+Marcelo Teixeira                        3        5990
+Felipe Araújo                           3        5100
+Vinícius Maciel                         3        4280
+Rodrigo Santana                         3        4220
+Paulo Henrique Vasconcelos              3        4060
+Larissa Gomes                           3        3620
+Henrique Duarte                         3        3410
+Renata Queiroz                          3        3120
+Diego Fernandes                         3        2640
+
+9 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 10. Lista de divulgação do Festival de Jazz: quem já comprou ingresso para
+SQL> -- algum evento da categoria FESTIVAL e ainda não comprou para o Jazz.
+SQL> -- Checklist: SUBCONSULTA COM IN (e NOT IN), ORDER BY
+SQL> SELECT u.primeiro_nome || ' ' || u.sobrenome AS usuario,
+  2         u.email
+  3    FROM Usuario u
+  4   WHERE u.cpf IN (SELECT p.cpf_usuario
+  5                     FROM Pedido p
+  6                    WHERE p.id_pedido IN (SELECT i.id_pedido
+  7                                            FROM Ingresso i
+  8                                           WHERE i.id_evento IN (SELECT ce.id_evento
+  9                                                                   FROM Categoria_Evento ce
+ 10                                                                  WHERE ce.categoria = 'FESTIVAL')))
+ 11     AND u.cpf NOT IN (SELECT p.cpf_usuario
+ 12                         FROM Pedido p
+ 13                         JOIN Ingresso i ON i.id_pedido = p.id_pedido
+ 14                         JOIN Evento e   ON e.id_evento = i.id_evento
+ 15                        WHERE e.nome = 'Festival de Jazz de Salvador')
+ 16   ORDER BY usuario;
+
+USUARIO                        EMAIL
+------------------------------ --------------------------------
+Ana Beatriz Albuquerque        ana.albuquerque@gmail.com
+Beatriz Moura                  beatriz.moura@email.com.br
+Diego Fernandes                diego.fernandes@outlook.com
+Felipe Araújo                  felipe.araujo@hotmail.com
+Gustavo Ribeiro                gustavo.ribeiro@yahoo.com.br
+Henrique Duarte                henrique.duarte@gmail.com
+Larissa Gomes                  larissa.gomes@hotmail.com
+Marcelo Teixeira               marcelo.teixeira@yahoo.com.br
+Matheus Oliveira               matheus.oliveira@email.com.br
+Natália Pinheiro               natalia.pinheiro@yahoo.com.br
+Paulo Henrique Vasconcelos     paulo.vasconcelos@gmail.com
+Renata Queiroz                 renata.queiroz@outlook.com
+Rodrigo Santana                rodrigo.santana@outlook.com
+Sofia Medeiros                 sofia.medeiros@email.com.br
+Vinícius Maciel                vinicius.maciel@email.com.br
+
+15 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 11. Sobreposição de faixas de preço: ofertas de Pista que custam mais do que
+SQL> -- pelo menos uma oferta VIP da plataforma.
+SQL> -- Checklist: SUBCONSULTA COM ANY, INNER JOIN, ORDER BY
+SQL> SELECT e.nome  AS evento,
+  2         l.nome  AS lote,
+  3         o.preco AS preco_pista
+  4    FROM Oferta o
+  5   INNER JOIN Evento e ON e.id_evento = o.id_evento
+  6   INNER JOIN Setor s  ON s.id_setor  = o.id_setor
+  7   INNER JOIN Lote l   ON l.id_lote   = o.id_lote
+  8   WHERE s.nome = 'Pista'
+  9     AND o.preco > ANY (SELECT o2.preco
+ 10                          FROM Oferta o2
+ 11                          JOIN Setor s2 ON s2.id_setor = o2.id_setor
+ 12                         WHERE s2.nome = 'VIP')
+ 13   ORDER BY o.preco DESC;
+
+EVENTO                               LOTE              PRECO_PISTA
+------------------------------------ ----------------- -----------
+Réveillon Orla de Boa Viagem 2027    Segundo Lote              400
+Réveillon Orla de Boa Viagem 2027    Primeiro Lote             320
+Réveillon Orla de Boa Viagem 2027    Lote Promocional          200
+Festival Maré Viva 2025              Segundo Lote              180
+Rock na Praça                        Segundo Lote              160
+Festival de Jazz de Salvador         Segundo Lote              150
+Festival Maré Viva 2025              Primeiro Lote             140
+
+7 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 12. Relatório 6: evento de maior receita entre os de empresas e entre os de
+SQL> -- produtores. A subconsulta é correlacionada pelo tipo de criador.
+SQL> -- Checklist: SUBCONSULTA COM ALL, uso da VIEW vw_resumo_evento, ORDER BY
+SQL> SELECT r.tipo_criador,
+  2         r.evento,
+  3         r.criador,
+  4         r.vendidos,
+  5         r.receita
+  6    FROM vw_resumo_evento r
+  7   WHERE r.receita >= ALL (SELECT r2.receita
+  8                             FROM vw_resumo_evento r2
+  9                            WHERE r2.tipo_criador = r.tipo_criador)
+ 10   ORDER BY r.tipo_criador;
+
+TIPO_CRIADOR EVENTO                               CRIADOR                          VENDIDOS    RECEITA
+------------ ------------------------------------ ------------------------------ ---------- ----------
+EMPRESA      Recife Tech Summit 2026              Pulso Produções LTDA                   56      14150
+PRODUTOR     Festival de Jazz de Salvador         Thiago Barros                          18       2220
+
+2 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 13. Pergunta 11: funções que são usadas como cargo em empresa e também como
+SQL> -- papel em atuação de evento.
+SQL> -- Checklist: INTERSECT, ORDER BY
+SQL> SELECT f.nome AS funcao
+  2    FROM Funcao f
+  3    JOIN Vinculo v ON v.id_funcao = f.id_funcao
+  4  INTERSECT
+  5  SELECT f.nome
+  6    FROM Funcao f
+  7    JOIN Desempenha d ON d.id_funcao = f.id_funcao
+  8   ORDER BY funcao;
+
+FUNCAO
+------------------------
+Captação de Patrocínio
+Curadoria
+Direção Artística
+Logística
+Marketing
+Produção Executiva
+
+6 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 14. Usuários cadastrados que nunca fizeram pedido (público de campanha).
+SQL> -- Checklist: MINUS, ORDER BY
+SQL> SELECT u.cpf, u.primeiro_nome || ' ' || u.sobrenome AS nome, u.dt_cadastro
+  2    FROM Usuario u
+  3  MINUS
+  4  SELECT u.cpf, u.primeiro_nome || ' ' || u.sobrenome, u.dt_cadastro
+  5    FROM Usuario u
+  6    JOIN Pedido p ON p.cpf_usuario = u.cpf
+  7   ORDER BY dt_cadastro;
+
+CPF         NOME                                 DT_CADASTR
+----------- ------------------------------------ ----------
+82619475030 Mariana Cavalcanti                   03/02/2024
+15934782605 Rafael Tavares                       10/02/2024
+60473829150 Juliana Monteiro                     18/02/2024
+29581367408 Thiago Barros                        02/03/2024
+73096158240 Fernanda Siqueira                    11/03/2024
+41857293610 Lucas Nogueira                       05/04/2024
+96320481750 Camila Rocha                         20/04/2024
+52816049372 Yasmin Correia                       14/10/2026
+
+8 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 15. Pergunta 17 e relatório 12: uso de cada função como cargo (Vinculo) e
+SQL> -- como papel em evento (Desempenha). O FULL OUTER JOIN mantém a função que só
+SQL> -- aparece de um dos lados.
+SQL> -- Checklist: FULL OUTER JOIN, COUNT, GROUP BY, ORDER BY
+SQL> SELECT COALESCE(cg.funcao, pp.funcao) AS funcao,
+  2         NVL(cg.qtd, 0)                 AS vezes_como_cargo,
+  3         NVL(pp.qtd, 0)                 AS vezes_em_eventos
+  4    FROM (SELECT f.nome AS funcao, COUNT(*) AS qtd
+  5            FROM Vinculo v
+  6            JOIN Funcao f ON f.id_funcao = v.id_funcao
+  7           GROUP BY f.nome) cg
+  8    FULL OUTER JOIN
+  9         (SELECT f.nome AS funcao, COUNT(*) AS qtd
+ 10            FROM Desempenha d
+ 11            JOIN Funcao f ON f.id_funcao = d.id_funcao
+ 12           GROUP BY f.nome) pp
+ 13      ON pp.funcao = cg.funcao
+ 14   ORDER BY vezes_em_eventos DESC, vezes_como_cargo DESC;
+
+FUNCAO                   VEZES_COMO_CARGO VEZES_EM_EVENTOS
+------------------------ ---------------- ----------------
+Logística                               2                4
+Produção Executiva                      3                3
+Marketing                               2                3
+Direção Artística                       1                3
+Curadoria                               1                2
+Captação de Patrocínio                  1                1
+Coordenação de Palco                    0                1
+Credenciamento                          0                1
+
+8 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 16. Pergunta 20: reajuste de um lote para o seguinte no mesmo setor do mesmo
+SQL> -- evento. Oferta aparece duas vezes, uma para cada lote.
+SQL> -- Checklist: INNER JOIN (auto-junção), ORDER BY
+SQL> SELECT e.nome                                         AS evento,
+  2         s.nome                                         AS setor,
+  3         l1.nome                                        AS de_lote,
+  4         l2.nome                                        AS para_lote,
+  5         o1.preco                                       AS preco_antes,
+  6         o2.preco                                       AS preco_depois,
+  7         ROUND(100 * (o2.preco - o1.preco) / o1.preco, 1) AS pct_aumento
+  8    FROM Oferta o1
+  9   INNER JOIN Oferta o2 ON o2.id_evento = o1.id_evento AND o2.id_setor = o1.id_setor
+ 10   INNER JOIN Lote l1   ON l1.id_lote   = o1.id_lote
+ 11   INNER JOIN Lote l2   ON l2.id_lote   = o2.id_lote
+ 12   INNER JOIN Evento e  ON e.id_evento  = o1.id_evento
+ 13   INNER JOIN Setor s   ON s.id_setor   = o1.id_setor
+ 14   WHERE l2.ordem = l1.ordem + 1
+ 15   ORDER BY pct_aumento DESC;
+
+EVENTO                               SETOR          DE_LOTE           PARA_LOTE         PRECO_ANTES PRECO_DEPOIS PCT_AUMENTO
+------------------------------------ -------------- ----------------- ----------------- ----------- ------------ -----------
+Recife Tech Summit 2026              Plateia        Lote Promocional  Primeiro Lote             150          250        66.7
+Réveillon Orla de Boa Viagem 2027    Pista          Lote Promocional  Primeiro Lote             200          320          60
+Festival Maré Viva 2025              Pista          Lote Promocional  Primeiro Lote              90          140        55.6
+Recife Tech Summit 2026              Plateia        Primeiro Lote     Segundo Lote              250          380          52
+Rock na Praça                        Pista          Lote Promocional  Primeiro Lote              80          120          50
+Sabores do Nordeste                  Pista          Primeiro Lote     Segundo Lote               45           65        44.4
+Copa Nordeste de Futevôlei           Arquibancada   Primeiro Lote     Segundo Lote               50           70          40
+Festival de Jazz de Salvador         Pista          Primeiro Lote     Segundo Lote              110          150        36.4
+Rock na Praça                        Pista          Primeiro Lote     Segundo Lote              120          160        33.3
+Noite do Forró Pé de Serra           Pista          Primeiro Lote     Segundo Lote               60           80        33.3
+Teatro: A Última Sessão              Plateia        Primeiro Lote     Segundo Lote              100          130          30
+Stand-up Pernambuco: Risadas ao Vivo Plateia        Primeiro Lote     Segundo Lote               70           90        28.6
+Festival Maré Viva 2025              Pista          Primeiro Lote     Segundo Lote              140          180        28.6
+Noite do Forró Pé de Serra           Camarote       Primeiro Lote     Segundo Lote              150          190        26.7
+Réveillon Orla de Boa Viagem 2027    VIP            Primeiro Lote     Segundo Lote              900         1130        25.6
+Réveillon Orla de Boa Viagem 2027    Pista          Primeiro Lote     Segundo Lote              320          400          25
+Réveillon Orla de Boa Viagem 2027    Pista Premium  Primeiro Lote     Segundo Lote              450          560        24.4
+Festival Maré Viva 2025              Pista Premium  Primeiro Lote     Segundo Lote              260          320        23.1
+Rock na Praça                        Arquibancada   Primeiro Lote     Segundo Lote               90          110        22.2
+Festival Maré Viva 2025              VIP            Primeiro Lote     Segundo Lote              480          560        16.7
+
+20 rows selected.
+
+SQL> 
+SQL> 
+SQL> -- 17. Pergunta 18: atuações que começaram antes do evento e terminaram depois
+SQL> -- dele. dt_fim nulo é atuação ainda em aberto e também entra.
+SQL> -- Checklist: IS NULL, INNER JOIN, ORDER BY
+SQL> SELECT u.primeiro_nome || ' ' || u.sobrenome AS produtor,
+  2         e.nome                                AS evento,
+  3         e.dt_realizacao,
+  4         a.dt_inicio,
+  5         a.dt_fim
+  6    FROM Atuacao a
+  7   INNER JOIN Evento e    ON e.id_evento   = a.id_evento
+  8   INNER JOIN Produtor pr ON pr.id_criador = a.id_produtor
+  9   INNER JOIN Usuario u   ON u.cpf         = pr.cpf
+ 10   WHERE a.dt_inicio < e.dt_realizacao
+ 11     AND (a.dt_fim > e.dt_realizacao OR a.dt_fim IS NULL)
+ 12   ORDER BY e.dt_realizacao, produtor;
+
+PRODUTOR                       EVENTO                               DT_REALIZA DT_INICIO  DT_FIM
+------------------------------ ------------------------------------ ---------- ---------- ----------
+Mariana Cavalcanti             Festival Maré Viva 2025              22/11/2025 01/08/2025 05/12/2025
+Thiago Barros                  Festival Maré Viva 2025              22/11/2025 15/10/2025 01/12/2025
+Juliana Monteiro               Rock na Praça                        28/03/2026 10/11/2025 05/04/2026
+Lucas Nogueira                 Rock na Praça                        28/03/2026 05/01/2026 10/04/2026
+Camila Rocha                   Recife Tech Summit 2026              18/04/2026 15/01/2026 30/04/2026
+Rafael Tavares                 Recife Tech Summit 2026              18/04/2026 10/01/2026 25/04/2026
+Fernanda Siqueira              Noite do Forró Pé de Serra           13/06/2026 15/02/2026 25/06/2026
+Rafael Tavares                 Noite do Forró Pé de Serra           13/06/2026 01/03/2026 20/06/2026
+Thiago Barros                  Sabores do Nordeste                  22/08/2026 20/04/2026 05/09/2026
+Bruno Carvalho                 Réveillon Orla de Boa Viagem 2027    31/12/2026 15/07/2026
+Mariana Cavalcanti             Réveillon Orla de Boa Viagem 2027    31/12/2026 01/07/2026
+
+11 rows selected.

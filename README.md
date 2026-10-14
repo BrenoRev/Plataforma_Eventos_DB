@@ -8,7 +8,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Oracle-Live%20SQL-F80000?logo=oracle&logoColor=white" alt="Oracle Live SQL">
   <img src="https://img.shields.io/badge/Modelo-EER-1f6feb" alt="Modelo EER">
-  <img src="https://img.shields.io/badge/Entrega%20atual-AV3-2ea043" alt="Entrega atual: AV3">
+  <img src="https://img.shields.io/badge/Entrega%20atual-AV4-2ea043" alt="Entrega atual: AV4">
 </p>
 
 ## Sobre
@@ -69,6 +69,7 @@ Banco de dados de uma plataforma de venda de ingressos. Criadores (produtores ou
 |---|---|---|
 | AV1 e AV2 | Minimundo e diagrama EER | [AV1-AV2](AV1-AV2/) |
 | AV3 | Scripts de criação e povoamento das tabelas | [AV3](AV3/) |
+| AV4 | Consultas SQL, função, procedure, package e triggers em PL/SQL | [AV4](AV4/) |
 
 ## Diagrama EER
 
