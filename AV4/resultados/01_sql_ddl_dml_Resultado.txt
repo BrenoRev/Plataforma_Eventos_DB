@@ -1,0 +1,150 @@
+SQL> -- Alterações de estrutura e de dados da AV4.
+SQL> -- Rodar depois do 01_ddl_criacao.sql e do 02_dml_povoamento.sql da AV3.
+SQL> --
+SQL> -- Checklist SQL coberto aqui: ALTER TABLE, CREATE INDEX, INSERT INTO, UPDATE,
+SQL> -- DELETE e CREATE VIEW.
+SQL> 
+SQL> 
+SQL> -- 1. ALTER TABLE: situação do evento
+SQL> -- O evento passa a ter status. ATIVO vende normalmente, ENCERRADO já aconteceu
+SQL> -- e CANCELADO foi suspenso pelo criador. O trigger trg_ingresso_venda (script 06)
+SQL> -- usa essa coluna para bloquear venda de evento que não está ativo.
+SQL> ALTER TABLE Evento ADD (status VARCHAR2(10) DEFAULT 'ATIVO' NOT NULL);
+
+Table altered.
+
+SQL> 
+SQL> ALTER TABLE Evento ADD CONSTRAINT ck_evento_status
+  2      CHECK (status IN ('ATIVO', 'ENCERRADO', 'CANCELADO'));
+
+Table altered.
+
+SQL> 
+SQL> 
+SQL> -- 2. CREATE INDEX
+SQL> -- FK composta de Ingresso para Oferta. É a junção usada em quase todos os
+SQL> -- relatórios de venda e no cursor de compra da package.
+SQL> CREATE INDEX idx_ingresso_oferta ON Ingresso (id_evento, id_setor, id_lote);
+
+Index created.
+
+SQL> 
+SQL> -- Data do pedido, usada nos filtros por período (consulta 3 do script 02).
+SQL> CREATE INDEX idx_pedido_data ON Pedido (dt_realizacao);
+
+Index created.
+
+SQL> 
+SQL> 
+SQL> -- 3. UPDATE: eventos que já aconteceram passam a ENCERRADO
+SQL> -- Rodando em outubro de 2026, são 7 eventos (os 3 restantes seguem ATIVO).
+SQL> UPDATE Evento
+  2     SET status = 'ENCERRADO'
+  3   WHERE dt_realizacao < TRUNC(SYSDATE);
+
+7 rows updated.
+
+SQL> 
+SQL> 
+SQL> -- 4. INSERT INTO: nova usuária, indicada pela Ana Beatriz
+SQL> -- dt_cadastro fica com o DEFAULT SYSDATE da tabela.
+SQL> INSERT INTO Usuario (cpf, primeiro_nome, sobrenome, email, dt_nascimento, cpf_indicador, dt_indicacao)
+  2  VALUES ('52816049372', 'Yasmin', 'Correia', 'yasmin.correia@gmail.com', DATE '2000-04-18',
+  3          '04812367091', TRUNC(SYSDATE));
+
+1 row created.
+
+SQL> 
+SQL> INSERT INTO Telefone (cpf, telefone) VALUES ('52816049372', '81994455667');
+
+1 row created.
+
+SQL> 
+SQL> -- INSERT com SELECT: abre o Segundo Lote do Réveillon copiando os setores do
+SQL> -- Primeiro Lote, com 25% de reajuste e venda a partir de hoje.
+SQL> -- Os ingressos dessas ofertas são emitidos depois pela package (script 07).
+SQL> INSERT INTO Oferta (id_evento, id_setor, id_lote, preco, dt_abertura_venda)
+  2  SELECT o.id_evento,
+  3         o.id_setor,
+  4         (SELECT id_lote FROM Lote WHERE nome = 'Segundo Lote'),
+  5         ROUND(o.preco * 1.25, -1),
+  6         TRUNC(SYSDATE)
+  7    FROM Oferta o
+  8   WHERE o.id_evento = (SELECT id_evento FROM Evento WHERE nome = 'Réveillon Orla de Boa Viagem 2027')
+  9     AND o.id_lote   = (SELECT id_lote   FROM Lote   WHERE nome = 'Primeiro Lote');
+
+3 rows created.
+
+SQL> 
+SQL> 
+SQL> -- 5. DELETE: telefone fixo de quem já tem celular
+SQL> -- O ingresso é enviado por mensagem, então o fixo só fica para quem não tem
+SQL> -- outro número. Remove 4 telefones.
+SQL> DELETE FROM Telefone t
+  2   WHERE LENGTH(t.telefone) = 10
+  3     AND EXISTS (SELECT 1
+  4                   FROM Telefone c
+  5                  WHERE c.cpf = t.cpf
+  6                    AND LENGTH(c.telefone) = 11);
+
+4 rows deleted.
+
+SQL> 
+SQL> 
+SQL> -- 6. CREATE VIEW
+SQL> -- Um ingresso vendido por linha, já com evento, local, setor, lote e pedido.
+SQL> -- Base das consultas de receita do script 02.
+SQL> CREATE OR REPLACE VIEW vw_venda_ingresso AS
+  2  SELECT i.id_evento,
+  3         e.nome            AS evento,
+  4         e.dt_realizacao   AS dt_evento,
+  5         e.status,
+  6         en.cidade,
+  7         en.uf,
+  8         s.nome            AS setor,
+  9         l.nome            AS lote,
+ 10         l.ordem           AS ordem_lote,
+ 11         i.num_ingresso,
+ 12         i.preco_pago,
+ 13         p.id_pedido,
+ 14         p.dt_realizacao   AS dt_pedido,
+ 15         p.cpf_usuario
+ 16    FROM Ingresso i
+ 17    JOIN Pedido   p  ON p.id_pedido = i.id_pedido
+ 18    JOIN Evento   e  ON e.id_evento = i.id_evento
+ 19    JOIN Endereco en ON en.cep      = e.cep
+ 20    JOIN Setor    s  ON s.id_setor  = i.id_setor
+ 21    JOIN Lote     l  ON l.id_lote   = i.id_lote;
+
+View created.
+
+SQL> 
+SQL> -- Resumo por evento: criador, ingressos emitidos e vendidos, receita.
+SQL> -- O nome do criador vem de Empresa ou de Usuario, conforme a subclasse.
+SQL> -- Receita sem venda vira 0 e não NULL, para a comparação com ALL da
+SQL> -- consulta 12 do script 02 funcionar.
+SQL> CREATE OR REPLACE VIEW vw_resumo_evento AS
+  2  SELECT e.id_evento,
+  3         e.nome                                         AS evento,
+  4         e.dt_realizacao,
+  5         e.status,
+  6         c.tipo_criador,
+  7         COALESCE(em.nome, u.primeiro_nome || ' ' || u.sobrenome) AS criador,
+  8         COUNT(i.num_ingresso)                          AS emitidos,
+  9         COUNT(i.id_pedido)                             AS vendidos,
+ 10         NVL(SUM(i.preco_pago), 0)                      AS receita
+ 11    FROM Evento e
+ 12    JOIN Criador c       ON c.id_criador  = e.id_criador
+ 13    LEFT JOIN Empresa em ON em.id_criador = c.id_criador
+ 14    LEFT JOIN Produtor pr ON pr.id_criador = c.id_criador
+ 15    LEFT JOIN Usuario u  ON u.cpf         = pr.cpf
+ 16    LEFT JOIN Ingresso i ON i.id_evento   = e.id_evento
+ 17   GROUP BY e.id_evento, e.nome, e.dt_realizacao, e.status, c.tipo_criador,
+ 18            em.nome, u.primeiro_nome, u.sobrenome;
+
+View created.
+
+SQL> 
+SQL> COMMIT;
+
+Commit complete.

@@ -1,0 +1,261 @@
+SQL> -- Package de vendas. Rodar depois do 04_pl_funcao_procedure.sql.
+SQL> --
+SQL> -- Reúne o que a aplicação precisa para vender: emitir ingressos de uma oferta,
+SQL> -- registrar a compra e consultar pedidos. Na AV3 a venda era feita por
+SQL> -- procedures locais do script de povoamento; aqui ela vira um objeto do banco.
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE pkg_vendas AS
+  2  
+  3      -- Uma linha do histórico de compras de um cliente: um pedido em um evento.
+  4      TYPE t_compra IS RECORD (
+  5          id_pedido  Pedido.id_pedido%TYPE,
+  6          dt_pedido  Pedido.dt_realizacao%TYPE,
+  7          -- O campo não pode se chamar evento: o nome esconderia a tabela
+  8          -- Evento e o %TYPE apontaria para o próprio campo (PLS-00320).
+  9          nome_evento Evento.nome%TYPE,
+ 10          ingressos  PLS_INTEGER,
+ 11          valor      NUMBER(12,2)
+ 12      );
+ 13  
+ 14      TYPE t_tab_compras IS TABLE OF t_compra INDEX BY PLS_INTEGER;
+ 15  
+ 16      -- Fica na especificação para quem chama poder tratar pelo nome.
+ 17      e_estoque_insuficiente EXCEPTION;
+ 18  
+ 19      -- Emite p_qtd ingressos para a oferta, continuando a numeração do evento.
+ 20      PROCEDURE emitir_ingressos (
+ 21          p_id_evento IN Oferta.id_evento%TYPE,
+ 22          p_id_setor  IN Oferta.id_setor%TYPE,
+ 23          p_id_lote   IN Oferta.id_lote%TYPE,
+ 24          p_qtd       IN PLS_INTEGER
+ 25      );
+ 26  
+ 27      -- Vende p_qtd ingressos da oferta para o usuário.
+ 28      -- p_id_pedido (IN OUT): se vier nulo, cria um pedido novo e devolve o id;
+ 29      -- se vier preenchido, acrescenta os ingressos a esse pedido, o que permite
+ 30      -- um pedido com ingressos de setores diferentes.
+ 31      -- p_valor (OUT): quanto custaram os ingressos desta chamada.
+ 32      PROCEDURE realizar_compra (
+ 33          p_cpf       IN     Usuario.cpf%TYPE,
+ 34          p_id_evento IN     Oferta.id_evento%TYPE,
+ 35          p_id_setor  IN     Oferta.id_setor%TYPE,
+ 36          p_id_lote   IN     Oferta.id_lote%TYPE,
+ 37          p_qtd       IN     PLS_INTEGER,
+ 38          p_forma     IN     Forma_Pagamento.forma_pagamento%TYPE,
+ 39          p_id_pedido IN OUT Pedido.id_pedido%TYPE,
+ 40          p_valor     OUT    NUMBER
+ 41      );
+ 42  
+ 43      -- Valor total de um pedido. Devolve NULL se o pedido não existe.
+ 44      FUNCTION valor_pedido (p_id_pedido IN Pedido.id_pedido%TYPE) RETURN NUMBER;
+ 45  
+ 46      -- Pergunta 24: pedidos de um cliente, com evento, quantidade e valor.
+ 47      PROCEDURE historico_cliente (
+ 48          p_cpf     IN  Usuario.cpf%TYPE,
+ 49          p_compras OUT t_tab_compras
+ 50      );
+ 51  
+ 52  END pkg_vendas;
+ 53  /
+
+Package created.
+
+SQL> 
+SQL> 
+SQL> CREATE OR REPLACE PACKAGE BODY pkg_vendas AS
+  2  
+  3      PROCEDURE emitir_ingressos (
+  4          p_id_evento IN Oferta.id_evento%TYPE,
+  5          p_id_setor  IN Oferta.id_setor%TYPE,
+  6          p_id_lote   IN Oferta.id_lote%TYPE,
+  7          p_qtd       IN PLS_INTEGER
+  8      ) IS
+  9          v_status   Evento.status%TYPE;
+ 10          v_ultimo   Ingresso.num_ingresso%TYPE;
+ 11          v_emitidos PLS_INTEGER := 0;
+ 12      BEGIN
+ 13          SELECT e.status
+ 14            INTO v_status
+ 15            FROM Oferta o
+ 16            JOIN Evento e ON e.id_evento = o.id_evento
+ 17           WHERE o.id_evento = p_id_evento
+ 18             AND o.id_setor  = p_id_setor
+ 19             AND o.id_lote   = p_id_lote;
+ 20  
+ 21          IF v_status <> 'ATIVO' THEN
+ 22              RAISE_APPLICATION_ERROR(-20011, 'Evento ' || v_status || ': nao e possivel emitir ingressos');
+ 23          ELSIF p_qtd IS NULL OR p_qtd <= 0 THEN
+ 24              RAISE_APPLICATION_ERROR(-20012, 'Quantidade de emissao invalida: ' || p_qtd);
+ 25          END IF;
+ 26  
+ 27          SELECT NVL(MAX(num_ingresso), 0)
+ 28            INTO v_ultimo
+ 29            FROM Ingresso
+ 30           WHERE id_evento = p_id_evento;
+ 31  
+ 32          WHILE v_emitidos < p_qtd LOOP
+ 33              v_emitidos := v_emitidos + 1;
+ 34              INSERT INTO Ingresso (id_evento, num_ingresso, preco_pago, id_setor, id_lote, id_pedido)
+ 35              VALUES (p_id_evento, v_ultimo + v_emitidos, NULL, p_id_setor, p_id_lote, NULL);
+ 36          END LOOP;
+ 37      EXCEPTION
+ 38          WHEN NO_DATA_FOUND THEN
+ 39              RAISE_APPLICATION_ERROR(-20010, 'Oferta inexistente (evento ' || p_id_evento
+ 40                                      || ', setor ' || p_id_setor || ', lote ' || p_id_lote || ')');
+ 41      END emitir_ingressos;
+ 42  
+ 43  
+ 44      PROCEDURE realizar_compra (
+ 45          p_cpf       IN     Usuario.cpf%TYPE,
+ 46          p_id_evento IN     Oferta.id_evento%TYPE,
+ 47          p_id_setor  IN     Oferta.id_setor%TYPE,
+ 48          p_id_lote   IN     Oferta.id_lote%TYPE,
+ 49          p_qtd       IN     PLS_INTEGER,
+ 50          p_forma     IN     Forma_Pagamento.forma_pagamento%TYPE,
+ 51          p_id_pedido IN OUT Pedido.id_pedido%TYPE,
+ 52          p_valor     OUT    NUMBER
+ 53      ) IS
+ 54          -- Ingressos livres da oferta, do menor número para o maior.
+ 55          -- FOR UPDATE trava as linhas para duas compras simultâneas não
+ 56          -- venderem o mesmo ingresso.
+ 57          CURSOR c_livres IS
+ 58              SELECT num_ingresso
+ 59                FROM Ingresso
+ 60               WHERE id_evento = p_id_evento
+ 61                 AND id_setor  = p_id_setor
+ 62                 AND id_lote   = p_id_lote
+ 63                 AND id_pedido IS NULL
+ 64               ORDER BY num_ingresso
+ 65                 FOR UPDATE;
+ 66  
+ 67          v_num         Ingresso.num_ingresso%TYPE;
+ 68          v_preco_pago  Ingresso.preco_pago%TYPE;
+ 69          v_dono        Pedido.cpf_usuario%TYPE;
+ 70          v_disponiveis NUMBER;
+ 71          v_usuario     PLS_INTEGER;
+ 72          v_ja_tem      PLS_INTEGER;
+ 73          v_vendidos    PLS_INTEGER := 0;
+ 74      BEGIN
+ 75          -- Se algo falhar no meio, volta até aqui e não fica pedido sem ingresso.
+ 76          SAVEPOINT sp_compra;
+ 77          p_valor := 0;
+ 78  
+ 79          SELECT COUNT(*) INTO v_usuario FROM Usuario WHERE cpf = p_cpf;
+ 80          v_disponiveis := fn_ingressos_disponiveis(p_id_evento, p_id_setor, p_id_lote);
+ 81  
+ 82          IF p_qtd IS NULL OR p_qtd <= 0 THEN
+ 83              RAISE_APPLICATION_ERROR(-20020, 'Quantidade invalida: ' || p_qtd);
+ 84          ELSIF v_usuario = 0 THEN
+ 85              RAISE_APPLICATION_ERROR(-20021, 'Usuario ' || p_cpf || ' nao cadastrado');
+ 86          ELSIF v_disponiveis < p_qtd THEN
+ 87              RAISE e_estoque_insuficiente;
+ 88          END IF;
+ 89  
+ 90          IF p_id_pedido IS NULL THEN
+ 91              INSERT INTO Pedido (id_pedido, dt_realizacao, cpf_usuario)
+ 92              VALUES (seq_pedido.NEXTVAL, SYSDATE, p_cpf)
+ 93              RETURNING id_pedido INTO p_id_pedido;
+ 94  
+ 95              INSERT INTO Forma_Pagamento (id_pedido, forma_pagamento)
+ 96              VALUES (p_id_pedido, p_forma);
+ 97          ELSE
+ 98              SELECT cpf_usuario INTO v_dono FROM Pedido WHERE id_pedido = p_id_pedido;
+ 99              IF v_dono <> p_cpf THEN
+100                  RAISE_APPLICATION_ERROR(-20022, 'Pedido ' || p_id_pedido || ' pertence a outro usuario');
+101              END IF;
+102  
+103              SELECT COUNT(*) INTO v_ja_tem
+104                FROM Forma_Pagamento
+105               WHERE id_pedido = p_id_pedido AND forma_pagamento = p_forma;
+106              IF v_ja_tem = 0 THEN
+107                  INSERT INTO Forma_Pagamento (id_pedido, forma_pagamento)
+108                  VALUES (p_id_pedido, p_forma);
+109              END IF;
+110          END IF;
+111  
+112          -- Só o id_pedido é gravado. O trigger trg_ingresso_venda confere se o
+113          -- evento pode vender e preenche o preco_pago com o preço atual da oferta.
+114          OPEN c_livres;
+115          LOOP
+116              EXIT WHEN v_vendidos = p_qtd;
+117              FETCH c_livres INTO v_num;
+118              EXIT WHEN c_livres%NOTFOUND;
+119  
+120              UPDATE Ingresso
+121                 SET id_pedido = p_id_pedido
+122               WHERE CURRENT OF c_livres;
+123  
+124              -- O Oracle não aceita RETURNING com WHERE CURRENT OF, então o
+125              -- preço gravado pelo trigger é lido de volta pela chave.
+126              SELECT preco_pago INTO v_preco_pago
+127                FROM Ingresso
+128               WHERE id_evento = p_id_evento AND num_ingresso = v_num;
+129  
+130              v_vendidos := v_vendidos + 1;
+131              p_valor    := p_valor + v_preco_pago;
+132          END LOOP;
+133          CLOSE c_livres;
+134  
+135          -- Outra sessão pode ter vendido entre a contagem e o cursor.
+136          IF v_vendidos < p_qtd THEN
+137              RAISE e_estoque_insuficiente;
+138          END IF;
+139      EXCEPTION
+140          WHEN OTHERS THEN
+141              IF c_livres%ISOPEN THEN
+142                  CLOSE c_livres;
+143              END IF;
+144              ROLLBACK TO sp_compra;
+145              RAISE;
+146      END realizar_compra;
+147  
+148  
+149      FUNCTION valor_pedido (p_id_pedido IN Pedido.id_pedido%TYPE) RETURN NUMBER IS
+150          v_total NUMBER(12,2);
+151      BEGIN
+152          SELECT NVL(SUM(i.preco_pago), 0)
+153            INTO v_total
+154            FROM Pedido p
+155            LEFT JOIN Ingresso i ON i.id_pedido = p.id_pedido
+156           WHERE p.id_pedido = p_id_pedido
+157           GROUP BY p.id_pedido;
+158  
+159          RETURN v_total;
+160      EXCEPTION
+161          WHEN NO_DATA_FOUND THEN
+162              RETURN NULL;
+163      END valor_pedido;
+164  
+165  
+166      PROCEDURE historico_cliente (
+167          p_cpf     IN  Usuario.cpf%TYPE,
+168          p_compras OUT t_tab_compras
+169      ) IS
+170          v_i PLS_INTEGER := 0;
+171      BEGIN
+172          FOR r IN (SELECT p.id_pedido,
+173                           p.dt_realizacao,
+174                           e.nome            AS evento,
+175                           COUNT(*)          AS ingressos,
+176                           SUM(i.preco_pago) AS valor
+177                      FROM Pedido p
+178                      JOIN Ingresso i ON i.id_pedido = p.id_pedido
+179                      JOIN Evento e   ON e.id_evento = i.id_evento
+180                     WHERE p.cpf_usuario = p_cpf
+181                     GROUP BY p.id_pedido, p.dt_realizacao, e.nome
+182                     ORDER BY p.dt_realizacao, p.id_pedido)
+183          LOOP
+184              v_i := v_i + 1;
+185              p_compras(v_i).id_pedido := r.id_pedido;
+186              p_compras(v_i).dt_pedido := r.dt_realizacao;
+187              p_compras(v_i).nome_evento := r.evento;
+188              p_compras(v_i).ingressos := r.ingressos;
+189              p_compras(v_i).valor     := r.valor;
+190          END LOOP;
+191      END historico_cliente;
+192  
+193  END pkg_vendas;
+194  /
+
+Package body created.
