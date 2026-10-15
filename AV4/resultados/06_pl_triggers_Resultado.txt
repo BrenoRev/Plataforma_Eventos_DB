@@ -1,0 +1,162 @@
+SQL> -- Triggers. Rodar depois do 05_pl_package.sql.
+SQL> --
+SQL> -- Dois de comando (disparam uma vez por instrução) e dois de linha (disparam
+SQL> -- uma vez para cada linha afetada). O teste 6 do script 07 faz um UPDATE de 4
+SQL> -- ofertas e mostra a diferença: 4 registros de histórico e 1 de log.
+SQL> 
+SQL> 
+SQL> -- Tabelas de apoio dos triggers. Apaga antes para o script poder rodar de novo.
+SQL> BEGIN
+  2      FOR t IN (SELECT table_name FROM user_tables
+  3                 WHERE table_name IN ('HISTORICO_PRECO', 'LOG_OPERACAO'))
+  4      LOOP
+  5          EXECUTE IMMEDIATE 'DROP TABLE ' || t.table_name || ' CASCADE CONSTRAINTS PURGE';
+  6      END LOOP;
+  7      FOR s IN (SELECT sequence_name FROM user_sequences
+  8                 WHERE sequence_name IN ('SEQ_HISTORICO_PRECO', 'SEQ_LOG_OPERACAO'))
+  9      LOOP
+ 10          EXECUTE IMMEDIATE 'DROP SEQUENCE ' || s.sequence_name;
+ 11      END LOOP;
+ 12  END;
+ 13  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> CREATE SEQUENCE seq_historico_preco START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+Sequence created.
+
+SQL> CREATE SEQUENCE seq_log_operacao    START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+Sequence created.
+
+SQL> 
+SQL> -- Histórico de preço de cada oferta (pergunta 25: explica por que o preco_pago
+SQL> -- de um ingresso pode ser diferente do preço atual).
+SQL> -- Sem FK para Oferta, para o histórico continuar existindo se a oferta for apagada.
+SQL> CREATE TABLE Historico_Preco (
+  2      id_historico  INTEGER       NOT NULL,
+  3      id_evento     INTEGER       NOT NULL,
+  4      id_setor      INTEGER       NOT NULL,
+  5      id_lote       INTEGER       NOT NULL,
+  6      preco_antigo  NUMBER(10,2)  NOT NULL,
+  7      preco_novo    NUMBER(10,2)  NOT NULL,
+  8      dt_alteracao  TIMESTAMP     DEFAULT SYSTIMESTAMP NOT NULL,
+  9      CONSTRAINT pk_historico_preco PRIMARY KEY (id_historico)
+ 10  );
+
+Table created.
+
+SQL> 
+SQL> -- Log de comandos executados nas tabelas monitoradas.
+SQL> CREATE TABLE Log_Operacao (
+  2      id_log       INTEGER       NOT NULL,
+  3      tabela       VARCHAR2(30)  NOT NULL,
+  4      operacao     VARCHAR2(6)   NOT NULL,
+  5      usuario_bd   VARCHAR2(128) NOT NULL,
+  6      dt_operacao  TIMESTAMP     DEFAULT SYSTIMESTAMP NOT NULL,
+  7      CONSTRAINT pk_log_operacao PRIMARY KEY (id_log),
+  8      CONSTRAINT ck_log_operacao_tipo CHECK (operacao IN ('INSERT', 'UPDATE', 'DELETE'))
+  9  );
+
+Table created.
+
+SQL> 
+SQL> 
+SQL> -- 1. Trigger de comando: log de alterações em Oferta.
+SQL> -- Grava uma linha por instrução, não importa quantas ofertas ela mudou.
+SQL> CREATE OR REPLACE TRIGGER trg_oferta_log
+  2  AFTER INSERT OR UPDATE OR DELETE ON Oferta
+  3  DECLARE
+  4      v_operacao Log_Operacao.operacao%TYPE;
+  5  BEGIN
+  6      IF INSERTING THEN
+  7          v_operacao := 'INSERT';
+  8      ELSIF UPDATING THEN
+  9          v_operacao := 'UPDATE';
+ 10      ELSE
+ 11          v_operacao := 'DELETE';
+ 12      END IF;
+ 13  
+ 14      INSERT INTO Log_Operacao (id_log, tabela, operacao, usuario_bd, dt_operacao)
+ 15      VALUES (seq_log_operacao.NEXTVAL, 'OFERTA', v_operacao, USER, SYSTIMESTAMP);
+ 16  END trg_oferta_log;
+ 17  /
+
+Trigger created.
+
+SQL> 
+SQL> 
+SQL> -- 2. Trigger de comando: pedido não pode ser excluído.
+SQL> -- O pedido é o registro da venda; apagar faria o ingresso perder o comprador.
+SQL> -- Dispara antes do DELETE, mesmo que nenhuma linha atenda ao WHERE.
+SQL> CREATE OR REPLACE TRIGGER trg_pedido_sem_exclusao
+  2  BEFORE DELETE ON Pedido
+  3  BEGIN
+  4      RAISE_APPLICATION_ERROR(-20040, 'Pedido e registro de venda e nao pode ser excluido');
+  5  END trg_pedido_sem_exclusao;
+  6  /
+
+Trigger created.
+
+SQL> 
+SQL> 
+SQL> -- 3. Trigger de linha: histórico de preço.
+SQL> -- Para cada oferta cujo preço mudou, guarda o valor antigo e o novo.
+SQL> CREATE OR REPLACE TRIGGER trg_oferta_historico_preco
+  2  AFTER UPDATE OF preco ON Oferta
+  3  FOR EACH ROW
+  4  WHEN (NEW.preco <> OLD.preco)
+  5  BEGIN
+  6      INSERT INTO Historico_Preco (id_historico, id_evento, id_setor, id_lote,
+  7                                   preco_antigo, preco_novo, dt_alteracao)
+  8      VALUES (seq_historico_preco.NEXTVAL, :OLD.id_evento, :OLD.id_setor, :OLD.id_lote,
+  9              :OLD.preco, :NEW.preco, SYSTIMESTAMP);
+ 10  END trg_oferta_historico_preco;
+ 11  /
+
+Trigger created.
+
+SQL> 
+SQL> 
+SQL> -- 4. Trigger de linha: regras da venda de um ingresso.
+SQL> -- Dispara quando um ingresso livre recebe pedido, venha a venda da package ou
+SQL> -- de um UPDATE direto. Bloqueia evento cancelado ou já realizado e pedido feito
+SQL> -- antes da abertura da oferta. Depois grava em preco_pago o preço atual da
+SQL> -- oferta (minimundo: o preço pago é o da oferta no dia da compra).
+SQL> -- Lê Evento, Oferta e Pedido, nunca Ingresso, então não cai em tabela mutante.
+SQL> CREATE OR REPLACE TRIGGER trg_ingresso_venda
+  2  BEFORE UPDATE OF id_pedido ON Ingresso
+  3  FOR EACH ROW
+  4  WHEN (OLD.id_pedido IS NULL AND NEW.id_pedido IS NOT NULL)
+  5  DECLARE
+  6      v_status     Evento.status%TYPE;
+  7      v_dt_evento  Evento.dt_realizacao%TYPE;
+  8      v_preco      Oferta.preco%TYPE;
+  9      v_abertura   Oferta.dt_abertura_venda%TYPE;
+ 10      v_dt_pedido  Pedido.dt_realizacao%TYPE;
+ 11  BEGIN
+ 12      SELECT e.status, e.dt_realizacao, o.preco, o.dt_abertura_venda
+ 13        INTO v_status, v_dt_evento, v_preco, v_abertura
+ 14        FROM Oferta o
+ 15        JOIN Evento e ON e.id_evento = o.id_evento
+ 16       WHERE o.id_evento = :NEW.id_evento
+ 17         AND o.id_setor  = :NEW.id_setor
+ 18         AND o.id_lote   = :NEW.id_lote;
+ 19  
+ 20      SELECT dt_realizacao INTO v_dt_pedido FROM Pedido WHERE id_pedido = :NEW.id_pedido;
+ 21  
+ 22      IF v_status = 'CANCELADO' THEN
+ 23          RAISE_APPLICATION_ERROR(-20030, 'Evento cancelado: venda bloqueada');
+ 24      ELSIF v_status = 'ENCERRADO' OR TRUNC(v_dt_pedido) > v_dt_evento THEN
+ 25          RAISE_APPLICATION_ERROR(-20031, 'Evento ja realizado: venda encerrada');
+ 26      ELSIF TRUNC(v_dt_pedido) < v_abertura THEN
+ 27          RAISE_APPLICATION_ERROR(-20032, 'Venda desta oferta abre em ' || TO_CHAR(v_abertura, 'DD/MM/YYYY'));
+ 28      END IF;
+ 29  
+ 30      :NEW.preco_pago := v_preco;
+ 31  END trg_ingresso_venda;
+ 32  /
+
+Trigger created.
